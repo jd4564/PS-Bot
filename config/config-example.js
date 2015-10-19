@@ -5,7 +5,7 @@
 exports.ip = '127.0.0.1';
 
 // The port you want the web server to run on
-exports.webport = '8000';
+exports.webport = 8000;
 
 // Log levels:
 // 0: no logging
