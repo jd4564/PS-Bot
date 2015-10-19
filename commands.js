@@ -109,7 +109,7 @@ exports.commands = {
 	kill: function (target, room, user, pm) {
 		if (!hasPermission(user, 'admin')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
 		devLog(user + " used " + Config.trigger + "kill");
-		setTimeout(function() {
+		setTimeout(function () {
 			process.exit();
 		}, 10);
 	},
