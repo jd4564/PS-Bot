@@ -95,7 +95,6 @@ exports.commands = {
 	// Developer commands
 	js: 'eval',
 	eval: function (target, room, user, pm) {
-		if (this.id === 'eos') return this.send(pm + "This command is disabled on this server.", room);
 		if (!hasPermission(user, 'admin')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
 		if (!target) return this.send(pm + "Usage: " + Config.trigger + "eval [target]", room);
 		try {
@@ -104,6 +103,15 @@ exports.commands = {
 		} catch (e) {
 			this.send(pm + e.name + ": " + e.message, room);
 		}
+		devLog(user + " used eval. Eval: " + target);
+	},
+
+	kill: function (target, room, user, pm) {
+		if (!hasPermission(user, 'admin')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
+		devLog(user + " used " + Config.trigger + "kill");
+		setTimeout(function() {
+			process.exit();
+		}, 10);
 	},
 
 	reload: function (target, room, user, pm) {
@@ -112,6 +120,7 @@ exports.commands = {
 			uncacheTree('./commands.js');
 			uncacheTree('./parser.js');
 			global.Parser = require('./parser.js');
+			devLog(user + " used " + Config.trigger + "reload");
 			return this.send(pm + "Commands reloaded.", room);
 		} catch (e) {
 			return this.send(pm + "Error reloading commands: " + e, room);
@@ -134,6 +143,7 @@ exports.commands = {
 
 	reconnect: function (target, room, user, pm) {
 		if (!hasPermission(user, 'admin')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
+		devLog(user + " used " + Config.trigger + "reconnect on the \"" + this.id + "\" server.");
 		this.disconnecting = true;
 		disconnect(this.id, true);
 	},
@@ -199,6 +209,10 @@ function loadRegdateCache() {
 
 function saveRegdateCache() {
 	fs.writeFileSync('config/regdate.json', JSON.stringify(regdateCache));
+}
+
+function devLog(text) {
+	fs.appendFile('logs/dev.log', '[' + new Date() + '] ' + text + '\n');
 }
 
 function hasPermission(user, permission) {
