@@ -25,7 +25,8 @@ exports.defaultPermissions = {
     'broadcast': '+',
     'viewlogs': '+',
     'say': '#',
-    'leave': '#'
+    'leave': '#',
+    'invite': '%'
 };
 
 // A list of servers you want your bot to connect to
