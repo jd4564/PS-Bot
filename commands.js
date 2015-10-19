@@ -1,3 +1,10 @@
+/* Main Bot Commands File
+ * In this, you will find that the main
+ * files for the bot are located in here.
+ * Alternatively, you can define commands
+ * in as a plungin in the plugin directory.
+ */
+
 var fs = require('fs');
 var request = require('request');
 var http = require('http');
@@ -7,7 +14,7 @@ var regdateCache = {};
 var permissions = {};
 
 exports.commands = {
-
+	// informational commands
 	credits: 'about',
 	about: function (target, room, user, pm) {
 		if (!hasPermission(user, 'broadcast')) pm = "/msg " + user.substr(1) + ", ";
@@ -27,6 +34,37 @@ exports.commands = {
 			uptimeText = uptime.seconds().duration();
 		}
 		this.send(pm + "Uptime: **" + uptimeText + "**", room);
+	},
+
+	memusage: function (target, room, user, pm) {
+		if (!hasPermission(user, 'broadcast')) pm = "/msg " + user.substr(1) + ", ";
+		return this.send(pm + "Memory Usage: " + Math.round((process.memoryUsage().rss / 1024) / 1024) + " MB", room);
+	},
+
+	regdate: function (target, room, user, pm) {
+		if (!hasPermission(user, 'broadcast')) pm = "/msg " + user + ", ";
+		var targetid = toId(target);
+		if (targetid.length < 1 || targetid.length > 19) return this.send(pm + Config.trigger + "regdate [user] - [user] may not be less than one character or longer than 19", room);
+		if (regdateCache[targetid]) {
+			reply(regdateCache[targetid]);
+		} else {
+			request('http://pokemonshowdown.com/users/' + targetid + '.json', function (error, response, body) {
+				var data = JSON.parse(body);
+				var date = data['registertime'];
+				if (date !== 0 && date.toString().length < 13) {
+					while (date.toString().length < 13) {
+						date = Number(date.toString() + '0');
+					}
+				}
+				reply(date);
+			});
+		}
+		var self = this;
+
+		function reply(date) {
+			if (date === 0) return self.send(pm + sanitize(target) + " is not registered.", room);
+			self.send(pm + sanitize(target) + " was registered on " + dateFormat(date, "dddd, mmmm d, yyyy hh:MMTT Z"), room);
+		}
 	},
 
 	viewlogs: function (target, room, user, pm) {
@@ -54,17 +92,7 @@ exports.commands = {
 		});
 	},
 
-	reconnect: function (target, room, user, pm) {
-		if (!hasPermission(user, 'admin')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
-		this.disconnecting = true;
-		disconnect(this.id, true);
-	},
-
-	memusage: function (target, room, user, pm) {
-		if (!hasPermission(user, 'broadcast')) pm = "/msg " + user.substr(1) + ", ";
-		return this.send(pm + "Memory Usage: " + Math.round((process.memoryUsage().rss / 1024) / 1024) + " MB", room);
-	},
-
+	// Developer commands
 	js: 'eval',
 	eval: function (target, room, user, pm) {
 		if (this.id === 'eos') return this.send(pm + "This command is disabled on this server.", room);
@@ -90,32 +118,6 @@ exports.commands = {
 		}
 	},
 
-	custom: function (target, room, user, pm) {
-		if (!hasPermission(user, 'custom')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
-		if (!target) return this.send(pm + "Usage: " + Config.trigger + "custom [room], message", room);
-		var parts = target.split(',');
-		for (var u in parts) parts[u] = parts[u].trim();
-		var message = parts.slice(1).join(',');
-		this.send(message, (toId(parts[0]) === "" ? room : parts[0]));
-	},
-
-	join: function (target, room, user, pm) {
-		if (!hasPermission(user, 'join')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
-		if (!target) return this.send(pm + "Usage: " + Config.trigger + "join [room]", room);
-		this.send("/join " + target);
-	},
-
-	leave: function (target, room, user, pm) {
-		if (!hasPermission(user, 'leave')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
-		this.send("/leave " + room, room);
-	},
-
-	say: function (target, room, user, pm) {
-		if (!hasPermission(user, 'say')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
-		if (!target) return this.send(pm + "Usage: " + Config.trigger + "say [message]", room);
-		this.send(pm + " " + sanitize(target), room);
-	},
-
 	permission: function (target, room, user, pm) {
 		if (!hasPermission(user, 'admin')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
 		if (!target || !~target.indexOf(',')) return this.send(pm + "Usage: " + Config.trigger + "permission [permission], [rank]", room);
@@ -130,30 +132,37 @@ exports.commands = {
 		return this.send(pm + "Permission \"" + targetSplit[0] + "\" has been set to \"" + targetSplit[1] + "\".", room);
 	},
 
-	regdate: function (target, room, user, pm) {
-		if (!hasPermission(user, 'broadcast')) pm = "/msg " + user + ", ";
-		var targetid = toId(target);
-		if (targetid.length < 1 || targetid.length > 19) return this.send(pm + Config.trigger + "regdate [user] - [user] may not be less than one character or longer than 19", room);
-		if (regdateCache[targetid]) {
-			reply(regdateCache[targetid]);
-		} else {
-			request('http://pokemonshowdown.com/users/' + targetid + '.json', function (error, response, body) {
-				var data = JSON.parse(body);
-				var date = data['registertime'];
-				if (date !== 0 && date.toString().length < 13) {
-					while (date.toString().length < 13) {
-						date = Number(date.toString() + '0');
-					}
-				}
-				reply(date);
-			});
-		}
-		var self = this;
+	reconnect: function (target, room, user, pm) {
+		if (!hasPermission(user, 'admin')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
+		this.disconnecting = true;
+		disconnect(this.id, true);
+	},
 
-		function reply(date) {
-			if (date === 0) return self.send(pm + sanitize(target) + " is not registered.", room);
-			self.send(pm + sanitize(target) + " was registered on " + dateFormat(date, "dddd, mmmm d, yyyy hh:MMTT Z"), room);
-		}
+	// Misc Commands
+	custom: function (target, room, user, pm) {
+		if (!hasPermission(user, 'custom')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
+		if (!target) return this.send(pm + "Usage: " + Config.trigger + "custom [room], message", room);
+		var parts = target.split(',');
+		for (var u in parts) parts[u] = parts[u].trim();
+		var message = parts.slice(1).join(',');
+		this.send(message, (toId(parts[0]) === "" ? room : parts[0]));
+	},
+
+	join: function (target, room, user, pm) {
+		if (!hasPermission(user, 'invite')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
+		if (!target) return this.send(pm + "Usage: " + Config.trigger + "join [room]", room);
+		this.send("/join " + target);
+	},
+
+	leave: function (target, room, user, pm) {
+		if (!hasPermission(user, 'leave')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
+		this.send("/leave " + room, room);
+	},
+
+	say: function (target, room, user, pm) {
+		if (!hasPermission(user, 'say')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
+		if (!target) return this.send(pm + "Usage: " + Config.trigger + "say [message]", room);
+		this.send(pm + " " + sanitize(target), room);
 	}
 };
 

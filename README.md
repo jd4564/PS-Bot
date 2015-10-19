@@ -22,3 +22,9 @@ First, read config/config-example.js and edit it to suit your needs. Once you fi
 After you finish editing config.js, run `npm install` to install the required modules.
 
 Once that is done, run `node app.js` to start the bot.
+
+Credits
+------------------------------------------------------------------------
+
+- jd (Development)
+- panpawn (Development)
