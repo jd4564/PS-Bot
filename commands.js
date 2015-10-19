@@ -74,6 +74,11 @@ exports.commands = {
 		var targets = target.split(',');
 		for (var u in targets) targets[u] = targets[u].trim();
 		if (!targets[2]) return this.send(pm + "Usage: " + Config.trigger + " viewlogs [server], [room], [DD-MM-YYYY]", room);
+		if (toId(targets[2]) === 'today' || toId(targets[2]) === 'yesterday') {
+			var date = new Date();
+			if (toId(targets[2]) === 'yesterday') date.setDate(date.getDate() - 1);
+			targets[2] = date.format('{dd}-{MM}-{yyyy}');
+		}
 		var dateSplit = targets[2].split('-');
 		if (!dateSplit[2]) return this.send(pm + "Incorrect date format.", room);
 		var path = "logs/chat/" + toId(targets[0]) + "/" + toId(targets[1]) + "/" + dateSplit[2] + "-" + dateSplit[1] + "/" + dateSplit[2] + "-" + dateSplit[1] + "-" + dateSplit[0] + ".txt";
