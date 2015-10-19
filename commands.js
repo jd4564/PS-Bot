@@ -80,11 +80,6 @@ exports.commands = {
 
 	reload: function (target, room, user, pm) {
 		if (!hasPermission(user, 'admin')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
-		if (target && target === 'config') {
-			uncacheTree('./config/config.js');
-			global.Config = require('./config/config.js');
-			return this.send(pm + "Config reloaded.", room);
-		}
 		try {
 			uncacheTree('./commands.js');
 			uncacheTree('./parser.js');
