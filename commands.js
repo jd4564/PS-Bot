@@ -1,6 +1,6 @@
 /* Main Bot Commands File
  * In this, you will find that the main
- * files for the bot are located in here.
+ * commands file for this bot is here.
  * Alternatively, you can define commands
  * in as a plungin in the plugin directory.
  */
