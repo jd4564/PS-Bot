@@ -43,7 +43,7 @@ module.exports = (function () {
 			}
 			break;
 		case 'pm':
-			if (~parts[4].indexOf('/invite') && Commands.hasPermission(parts[2], 'invite')) return server.send('/join ' + parts[4].remove('/invite'));
+			if (~parts[4].indexOf('/invite') && Commands.hasPermission(parts[2], 'invite')) return server.send('/join ' + parts[4].remove('/invite '));
 			this.parseChat(roomid, parts[2], parts.slice(4).join('|'), '/msg ' + parts[2] + ', ');
 			sendTell(parts[2].substr(1, parts[2].length), server);
 			break;
