@@ -1,0 +1,36 @@
+{
+  "name": "ps-bot",
+  "version": "1.0.0",
+  "description": "Pokémon Showdown Bot",
+  "main": "app.js",
+  "dependencies": {
+    "dateformat": "^1.0.11",
+    "es6-shim": "^0.33.1",
+    "node-static": "^0.7.7",
+    "request": "^2.61.0",
+    "sqlite3": "^3.1.0",
+    "sugar": "^1.4.1",
+    "ws": "^0.8.0"
+  },
+  "devDependencies": {
+    "jshint-stylish": "^2.0.1",
+    "load-grunt-tasks": "^3.3.0",
+    "merge-stream": "^1.0.0",
+    "grunt-contrib-jshint": "^0.11.3",
+    "grunt-jscs": "^2.1.0",
+    "grunt": "^0.4.5"
+  },
+  "scripts": {
+    "test": "grunt"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jd4564/PS-Bot.git"
+  },
+  "author": "jd4564",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jd4564/PS-Bot/issues"
+  },
+  "homepage": "https://github.com/jd4564/PS-Bot#readme"
+}

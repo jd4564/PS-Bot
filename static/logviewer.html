@@ -1,0 +1,48 @@
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="css/logviewer.css">
+    <link rel="stylesheet" type="text/css" href="http://play.pokemonshowdown.com/style/battle.css">
+    <link rel="stylesheet" type="text/css" href="http://play.pokemonshowdown.com/style/client.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <script src="js/jquery-2.1.4.min.js"></script>
+    <script src="js/html-css-sanitizer-minified.js"></script>
+    <script src="js/parser.js"></script>
+    <script src="http://play.pokemonshowdown.com/js/config.js"></script>
+    <script>
+        function getUrlVars() {
+            var vars = {};
+            var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+                vars[key] = value;
+            });
+            return vars;
+        }
+        function load() {
+            if (!getUrlVars()["logfile"]) return document.getElementById('infoarea').innerHTML = 'Chat logs not found';
+            parseLogs();
+            // document.getElementById('infoarea').innerHTML = '<center><font color="red">Room: ' + getUrlVars()["room"] + '<br />Date: ' + getUrlVars()["date"] + '</font>';
+            $('head').append('<link rel="stylesheet" type="text/css" href="http://play.pokemonshowdown.com/customcss.php?server=' + getUrlVars()["server"] + '">');
+        }
+    </script>
+</head>
+
+<body onload="load();">
+    <div class="header">
+        <img class="logo" src="http://play.pokemonshowdown.com/pokemonshowdownbeta.png" height="45" alt="Pokémon Showdown! (beta)">
+        <center>
+            <div class="infoarea" id="infoarea">
+            </div>
+        </center>
+        <div class="maintabbarbottom"></div>
+    </div>
+    <div class="ps-room ps-room-light">
+        <div class="chat-log" style="bottom:0px;">
+            <div class="inner">
+                <!-- chat logs go here -->
+            </div>
+        </div>
+    </div>
+    </div>
+</body>
+
+</html>
