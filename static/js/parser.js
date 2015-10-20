@@ -66,15 +66,15 @@
                     case 'init':
                     case 'b':
                     case 'B':
-			    	case 'n':
-			    	case 'name':
-			    	case 'N':
-			    	case 'users':
-			    	case 'uhtml':
-			    	case 'uhtmlchange':
-			    	case 'unlink':
-			    	case 'tournament':
-			    	case 'tournaments':
+                    case 'n':
+                    case 'name':
+                    case 'N':
+                    case 'users':
+                    case 'uhtml':
+                    case 'uhtmlchange':
+                    case 'unlink':
+                    case 'tournament':
+                    case 'tournaments':
 			    	    break;
 
                 }
