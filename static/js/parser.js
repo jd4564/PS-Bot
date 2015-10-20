@@ -30,6 +30,7 @@
             $('#infoarea').html('<center><font color=black>Server: ' + escapeHTML(getUrlVars()["server"]) + ' Room: ' + escapeHTML(getUrlVars()["room"]) + '<br />Date: ' + escapeHTML(getUrlVars()["date"]) + '</font></center>');
             var lines = data.split('\n');
             for (var u in lines) {
+                if (lines[u].substr(0, 1) !== '|') lines[u] = '||' + lines[u];
                 var parts = lines[u].split('|');
                 switch (parts[1]) {
                     case 'c:':
@@ -40,6 +41,7 @@
 					        }
 				        }
 				        date = new Date(date);
+				        if (parts[3] === '~') return;
                         var name = parts[3].substr(1, parts[3].length);
                         var group = parts[3].charAt(0);
                         var message = parts.slice(4).join('|');
@@ -51,6 +53,30 @@
                     case 'html':
                         $('.inner').append('<div class="notice">' + sanitizeHTML(parts.splice(2).join('|')) + '</div>');
                         break;
+                    case '':
+                        $('.inner').append('<div class="notice">' + escapeHTML(parts.slice(2).join('|')) + '</div>');
+                        break;
+                    // we don't parse these messages
+                    case 'j':
+                    case 'join':
+                    case 'J':
+                    case 'l':
+                    case 'leave':
+                    case 'L':
+                    case 'init':
+                    case 'b':
+                    case 'B':
+			    	case 'n':
+			    	case 'name':
+			    	case 'N':
+			    	case 'users':
+			    	case 'uhtml':
+			    	case 'uhtmlchange':
+			    	case 'unlink':
+			    	case 'tournament':
+			    	case 'tournaments':
+			    	    break;
+
                 }
             }
         });

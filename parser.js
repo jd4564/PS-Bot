@@ -91,6 +91,9 @@ module.exports = (function () {
 				break;
 			}
 			break;
+		default:
+			this.logChat(toId(roomid), data);
+			break;
 		}
 	};
 
