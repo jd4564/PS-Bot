@@ -1,8 +1,6 @@
-/* Main Bot Commands File
- * In this, you will find that the main
- * commands file for this bot is here.
- * Alternatively, you can define commands
- * in as a plungin in the plugin directory.
+/* Commands
+ * In here you'll find the majority of the commands for the bot.
+ * Alternatively, you may add commands via a plugin in the plugins directory.
  */
 
 var fs = require('fs');
