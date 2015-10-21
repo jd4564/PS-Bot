@@ -176,6 +176,15 @@ exports.commands = {
 		if (!hasPermission(user, 'say')) return this.send("/msg " + user.substr(1) + ", Access denied.", room);
 		if (!target) return this.send(pm + "Usage: " + Config.trigger + "say [message]", room);
 		this.send(pm + " " + sanitize(target), room);
+	},
+
+	choose: 'pick',
+	pick: function (target, room, user, pm) {
+		if (!hasPermission(user, 'broadcast')) pm = "/msg " + user.substr(1) + ", ";
+		target = target.split(',');
+		if (target.length < 2) return this.send(pm + "Usage: " + Config.trigger + "pick [option], [option], ... - picks a random [option].  Requires at least two options.", room);
+		var random = target[Math.floor(Math.random() * target.length)];
+		this.send(pm + "Randomly selected: " + random, room);
 	}
 };
 
