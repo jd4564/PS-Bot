@@ -184,6 +184,12 @@ exports.commands = {
 		if (!hasPermission(user, 'broadcast')) pm = "/msg " + user.substr(1) + ", ";
 		if (target.length < 3 || !~target.indexOf(',')) return this.send(pm + "Usage: " + Config.trigger + "pick [option], [option], ... - picks a random [option].  Requires at least two options.", room);
 		this.send(pm + "Randomly selected: " + target.split(',').sample(), room);
+	},
+
+	helix: function (target, room, user, pm) {
+		if (!hasPermission(user, 'broadcast')) pm = "/msg " + user.substr(1) + ", ";
+		var helix = ["Signs point to yes.", "Yes.", "Reply hazy, try again.", "Without a doubt.", "As I see it, yes.", "You may rely on it.", "Concentrate and ask again.", "Outlook not so good.", "It is decidedly so.", "Better not tell you now.", "Very doubtful.", "Yes - definitely.", "It is certain.", "Cannot predict now.", "Most likely.", "Ask again later.", "My reply is no.", "Outlook good.", "Don't count on it."].sample();
+		this.send(pm + helix, room);
 	}
 };
 
