@@ -7,7 +7,7 @@ var fs = require('fs');
 var request = require('request');
 var http = require('http');
 var dateFormat = require('dateformat');
-var ranks = [' ', '+', '%', '@', '#', '&', '~', 'admin'];
+var ranks = [' ', '+', '\u2605', '%', '@', '#', '&', '~', 'admin'];
 var regdateCache = {};
 var permissions = {};
 
