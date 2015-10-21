@@ -178,13 +178,12 @@ exports.commands = {
 		this.send(pm + " " + sanitize(target), room);
 	},
 
+	pickrandom: 'pick',
 	choose: 'pick',
 	pick: function (target, room, user, pm) {
 		if (!hasPermission(user, 'broadcast')) pm = "/msg " + user.substr(1) + ", ";
-		target = target.split(',');
-		if (target.length < 2) return this.send(pm + "Usage: " + Config.trigger + "pick [option], [option], ... - picks a random [option].  Requires at least two options.", room);
-		var random = target[Math.floor(Math.random() * target.length)];
-		this.send(pm + "Randomly selected: " + random, room);
+		if (target.length < 3 || !~target.indexOf(',')) return this.send(pm + "Usage: " + Config.trigger + "pick [option], [option], ... - picks a random [option].  Requires at least two options.", room);
+		this.send(pm + "Randomly selected: " + target.split(',').sample(), room);
 	}
 };
 
