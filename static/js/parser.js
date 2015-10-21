@@ -41,7 +41,7 @@
 					        }
 				        }
 				        date = new Date(date);
-				        if (parts[3] === '~') return;
+				        if (parts[3] === '~') break;
                         var name = parts[3].substr(1, parts[3].length);
                         var group = parts[3].charAt(0);
                         var message = parts.slice(4).join('|');
