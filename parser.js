@@ -12,6 +12,7 @@ module.exports = (function () {
 
 	Parser.prototype.parse = function (roomid, data) {
 		var server = Servers[this.serverid];
+		if (data.charAt(0) !== '|') data = '||' + data;
 		var parts = data.split('|');
 		switch (parts[1]) {
 		case 'challstr':
@@ -61,7 +62,9 @@ module.exports = (function () {
 			break;
 		case 'raw':
 		case 'html':
-			this.logChat(toId(roomid), data);
+			if (data.substr(0, 50) !== '<div class="infobox"><div class="infobox-limited">') {
+				this.logChat(toId(roomid), data);
+			}
 			break;
 		case 'queryresponse':
 			switch (parts[2]) {
@@ -91,8 +94,13 @@ module.exports = (function () {
 				break;
 			}
 			break;
-		default:
-			this.logChat(toId(roomid), data);
+		case 'N':
+			if (~data.indexOf('\n')) {
+				this.logChat(toId(roomid), data.trim());
+			}
+			break;
+		case '':
+			this.logChat(toId(roomid), parts.slice(2).join('|'));
 			break;
 		}
 	};
