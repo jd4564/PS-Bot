@@ -77,10 +77,10 @@ module.exports = (function () {
 					'chat': []
 				};
 				for (var a in roomData['official']) {
-					server.roomList['official'].push(roomData['official'][a].title);
+					server.roomList['official'].push(toId(roomData['official'][a].title));
 				}
 				for (var b in roomData['chat']) {
-					server.roomList['chat'].push(roomData['chat'][b].title);
+					server.roomList['chat'].push(toId(roomData['chat'][b].title));
 				}
 				if (!server.joinedRooms) {
 					if (server.rooms === 'all') {
@@ -97,6 +97,22 @@ module.exports = (function () {
 		case 'N':
 			if (~data.indexOf('\n')) {
 				this.logChat(toId(roomid), data.trim());
+			}
+			break;
+		case 'popup':
+			var message = parts.slice(2).join('|');
+			if (message.match(/You were kicked from (.*) by (.*)./)) {
+				var kickedRoom = message.replace(/You were kicked from /, '').replace(/\bby(.*)/, '').trim();
+				var kicker = message.replace(/You were kicked from (.*) by/, '').trim().slice(0, - 1);
+				log('Kicked from ' + kickedRoom + ' by ' + kicker, server.id);
+			}
+			break;
+		case 'deinit':
+			if (server.leaving) {
+				server.leaving = false;
+			} else if (server.rejoinOnKick && ~server.roomList.official.indexOf(toId(roomid))) {
+				log("Attempting to rejoin " + roomid, server.id);
+				server.send('/join ' + roomid);
 			}
 			break;
 		case '':

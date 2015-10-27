@@ -46,17 +46,9 @@ for (var server in Config.servers) {
 
 var Server = (function () {
 	function Server(server) {
+		for (var u in server) this[u] = server[u];
 		var self = this;
 		this.parser = new Parser(server.id);
-		this.id = toId(server.id);
-		this.ip = server.ip;
-		this.port = server.port;
-		this.autoreconnect = server.autoreconnect;
-		this.rooms = server.rooms;
-		this.privaterooms = server.privaterooms;
-		this.name = server.name;
-		this.pass = server.pass;
-		this.autoAnagram = server.autoAnagram;
 		this.roomList = {'official': [], 'chat': []};
 		this.connected = false;
 		this.joinedRooms = false;
