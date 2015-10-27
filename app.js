@@ -83,6 +83,7 @@ var Server = (function () {
 		});
 
 		this.connection.on('close', function (code, message) {
+			self.connected = false;
 			console.log('Disconnected from ' + self.id + ': ' + code);
 			if (self.disconnecting) return;
 			log('Connection lost to ' + self.id + ': ' + message, self.id);
