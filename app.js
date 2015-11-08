@@ -31,7 +31,7 @@ global.toId = function (text) {
 global.sanitize = function (message) {
 	if (message.charAt(0) === '/') message = '/' + message;
 	if (message.charAt(0) === '!' || message.substr(0, 2) === '>>') message = ' ' + message;
-	return message;
+	return message.replace(/\n/g, '');
 };
 
 for (var server in Config.servers) {
