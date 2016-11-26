@@ -1,6 +1,8 @@
-var fs = require('fs');
-var dateFormat = require('dateformat');
-var tells = {};
+'use strict';
+
+const dateFormat = require('dateformat');
+const fs = require('fs');
+let tells = {};
 
 function loadData() {
 	try {
@@ -15,9 +17,9 @@ function saveData() {
 
 function sendTell(user, server) {
 	if (!tells[toId(user)]) return;
-	var userid = toId(user);
-	var reply = '';
-	for (var tell in tells[userid]) {
+	let userid = toId(user);
+	let reply = '';
+	for (let tell in tells[userid]) {
 		reply = dateFormat(tells[userid][tell].date, "(dddd, mmmm d, yyyy hh:MMTT Z) (") + tells[userid][tell].server + ") " + tells[userid][tell].sender + ' said: "' + tells[userid][tell].message + '"';
 		server.send('/msg ' + user + ', ' + reply);
 		tells[userid].splice(tell, 1);
@@ -25,28 +27,27 @@ function sendTell(user, server) {
 	if (tells[userid].length < 1) delete tells[userid];
 	saveData();
 }
-global.sendTell = sendTell;
+Tools.sendTell = sendTell;
 
 exports.commands = {
 	tell: function (target, room, user, pm) {
-		if (!Commands.hasPermission(user, 'broadcast') && pm === '') pm = "/msg " + user + ", ";
-		if (!target || !~target.indexOf(',')) return this.send(pm + "Usage: " + Config.trigger + "tell [user], [message]", room);
-		var splitTarget = target.split(',');
-		for (var u in splitTarget) splitTarget[u] = splitTarget[u].trim();
+		if (!target || !~target.indexOf(',')) return this.sendReply("Usage: " + Config.trigger + "tell [user], [message]");
+		let splitTarget = target.split(',');
+		for (let u in splitTarget) splitTarget[u] = splitTarget[u].trim();
 
-		if (!toId(splitTarget[0]) || toId(splitTarget[0]).length > 19) return this.send(pm + '"' + splitTarget[0] + '" is not a valid username.', room);
-		if (splitTarget[1].length > 250) return this.send(pm + "Tells may not be longer than 250 characters.", room);
+		if (!toId(splitTarget[0]) || toId(splitTarget[0]).length > 19) return this.sendReply('"' + splitTarget[0] + '" is not a valid username.');
+		if (splitTarget[1].length > 250) return this.sendReply("Tells may not be longer than 250 characters.");
 
-		var targetId = toId(splitTarget[0]);
+		let targetId = toId(splitTarget[0]);
 		if (!tells[targetId]) tells[targetId] = [];
 
 		tells[targetId].push({
 			message: splitTarget[1],
 			sender: user,
 			date: Date.now(),
-			server: this.id
+			server: this.serverid,
 		});
 		saveData();
-		return this.send(pm + "Your message has been sent.", room);
-	}
+		return this.sendReply("Your message has been sent.");
+	},
 };

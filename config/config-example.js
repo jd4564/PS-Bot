@@ -1,3 +1,5 @@
+'use strict';
+
 // Example configuration file
 
 // The external IP address or domain of the server hosting your bot
@@ -22,11 +24,11 @@ exports.trigger = '.';
 
 // Default permissions the bot will use if no permission file exists
 exports.defaultPermissions = {
-    'broadcast': '+',
-    'viewlogs': '+',
-    'say': '#',
-    'leave': '#',
-    'invite': '%'
+	'broadcast': '+',
+	'viewlogs': '+',
+	'say': '#',
+	'leave': '#',
+	'invite': '%',
 };
 
 // A list of servers you want your bot to connect to
@@ -43,16 +45,16 @@ exports.servers = {
 		// Private rooms are hidden from the seen command and prevents non-admins from using viewlogs on them
 		privaterooms: ['aprivateroom'],
 		name: 'example-bot',
-		pass: 'example-pass'
+		pass: 'example-pass',
 	},
 	"anotherserver": {
-	    id: 'anotherserver',
-	    ip: '127.0.0.2',
-	    port: 8000,
-	    autoreconnect: true,
-	    rooms: ['justarandomroom'],
-	    privaterooms: ['secretroom'],
-	    name: 'Another Example Bot',
-	    pass: 'Another Example Password'
-	}
+		id: 'anotherserver',
+		ip: '127.0.0.2',
+		port: 8000,
+		autoreconnect: true,
+		rooms: ['justarandomroom'],
+		privaterooms: ['secretroom'],
+		name: 'Another Example Bot',
+		pass: 'Another Example Password',
+	},
 };

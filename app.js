@@ -1,7 +1,10 @@
-var WebSocket = require('ws');
-var fs = require('fs');
-require('sugar');
+'use strict';
+
+const WebSocket = require('ws');
+const fs = require('fs');
+
 global.sqlite3 = require('sqlite3');
+global.Tools = require('./tools.js');
 try {
 	global.Config = require('./config/config.js');
 } catch (err) {
@@ -28,26 +31,23 @@ global.toId = function (text) {
 	return text.toLowerCase().replace(/[^a-z0-9]+/g, '');
 };
 
-global.sanitize = function (message) {
-	if (message.charAt(0) === '/') message = '/' + message;
-	if (message.charAt(0) === '!' || message.substr(0, 2) === '>>') message = ' ' + message;
-	return message.replace(/\n/g, '');
-};
-
-for (var server in Config.servers) {
-	for (var room in Config.servers[server].rooms) {
-		Config.servers[server].rooms[room] = toId(Config.servers[server].rooms[room]);
+for (let server in Config.servers) {
+	if (typeof Config.servers[server].rooms === Array) {
+		for (let room in Config.servers[server].rooms) {
+			Config.servers[server].rooms[room] = toId(Config.servers[server].rooms[room]);
+		}
 	}
-	for (var room in Config.servers[server].privaterooms) {
-		Config.servers[server].privaterooms[room] = toId(Config.servers[server].privaterooms[room]);
+	if (typeof Config.servers[server].privaterooms === Array) {
+		for (let room in Config.servers[server].privaterooms) {
+			Config.servers[server].privaterooms[room] = toId(Config.servers[server].privaterooms[room]);
+		}
 	}
 }
 
 
-var Server = (function () {
-	function Server(server) {
-		for (var u in server) this[u] = server[u];
-		var self = this;
+class Server {
+	 constructor(server) {
+		for (let u in server) this[u] = server[u];
 		this.parser = new Parser(server.id);
 		this.roomList = {'official': [], 'chat': []};
 		this.connected = false;
@@ -55,65 +55,63 @@ var Server = (function () {
 
 		this.connection = new WebSocket('ws://' + this.ip + ':' + this.port + '/showdown/websocket');
 
-		this.connection.on('open', function () {
-			log('Connected to ' + self.id, self.id);
-			console.log('Connected to ' + self.id);
-			self.connected = true;
+		this.connection.on('open', () => {
+			Tools.log('Connected to ' + this.id, this.id);
+			this.connected = true;
 		});
 
-		this.connection.on('error', function (error) {
-			log('Error: ' + error, self.id, true);
+		this.connection.on('error', error => {
+			Tools.log('Error: ' + error, this.id, true);
 		});
 
-		this.connection.on('message', function (data) {
-			log('> [' + self.id + '] ' + data, self.id);
-			var roomid = 'lobby';
+		this.connection.on('message', data => {
+			if (!data || data.length < 1) return;
+			Tools.log('> [' + this.id + '] ' + data, this.id);
+			let roomid = 'lobby';
 			if (data.charAt(0) === '>') {
 				roomid = data.substr(1, data.indexOf('\n') - 1);
 				data = data.substr(data.indexOf('\n') + 1, data.length);
 			}
 			if (roomid.substr(0, 6) === 'battle') {
-				var split = data.split('\n');
-				for (var line in split) {
-					self.parser.parse(roomid, split[line], Servers[self.id]);
+				let split = data.split('\n');
+				for (let line in split) {
+					this.parser.parse(roomid, split[line], Servers[this.id]);
 				}
 				return;
 			}
-			self.parser.parse(roomid, data, Servers[self.id]);
+			this.parser.parse(roomid, data, Servers[this.id]);
 		});
 
-		this.connection.on('close', function (code, message) {
-			self.connected = false;
-			console.log('Disconnected from ' + self.id + ': ' + code);
-			if (self.disconnecting) return;
-			log('Connection lost to ' + self.id + ': ' + message, self.id);
-			delete Servers[self.id];
-			if (!self.autoreconnect) return;
-			log('Reconnecting to ' + self.id + ' in one minute.', self.id);
-			var reconnect = setTimeout(function () {
-				connect(self.id);
+		this.connection.on('close', (code, message) => {
+			this.connected = false;
+			if (this.disconnecting) return;
+			Tools.log('Connection lost to ' + this.id + ': ' + message, this.id);
+			delete Servers[this.id];
+			if (!this.autoreconnect) return;
+			Tools.log('Reconnecting to ' + this.id + ' in one minute.', this.id);
+			let reconnect = setTimeout(() => {
+				connect(this.id);
 				clearInterval(reconnect);
 			}, 60 * 1000);
 		});
 
 		if (server.ping) { // this is needed to stay connected to tbt and I'm not sure why
-			this.ping = setInterval(function () {
-				if (!self.connected) return clearInterval(self.ping);
-				self.connection.ping();
+			this.ping = setInterval(() => {
+				if (!this.connected) return clearInterval(this.ping);
+				this.connection.ping();
 			}, server.ping);
 		}
+
+		this.lastMessageTime = 0;
+		this.chatQueue = [];
 	}
 
-	Server.prototype.lastMessageTime = 0;
-	Server.prototype.chatQueue = [];
-
-	Server.prototype.send = function (message, room) {
+	send(message, room) {
 		if (!this.connected) return false;
-		var self = this;
 		if ((Date.now() - this.lastMessageTime) < 600) {
 			if (this.chatQueue.length < 1) {
-				this.processingChatQueue = setInterval(function () {
-					self.processChatQueue();
+				this.processingChatQueue = setInterval(() => {
+					this.processChatQueue();
 				}, 600);
 			}
 			return this.chatQueue.push([message, room]);
@@ -122,81 +120,55 @@ var Server = (function () {
 		try {
 			this.connection.send(room + '|' + message);
 		} catch (e) {
-			log('Sending "' + room + '|' + message + '" crashed: ' + e.stack, this.id);
+			Tools.log('Sending "' + room + '|' + message + '" crashed: ' + e.stack, this.id);
 		}
 		this.lastMessageTime = Date.now();
-		log('> [' + this.id + '] ' + (room !== '' ? '[' + room + '] ' : '[] ') + message, self.id);
-	};
+		Tools.log('> [' + this.id + '] ' + (room !== '' ? '[' + room + '] ' : '[] ') + message, this.id);
+	}
 
-	Server.prototype.processChatQueue = function () {
+	processChatQueue() {
 		if (this.chatQueue.length < 1 || (Date.now() - this.lastMessageTime) < 600) return;
 		this.send(this.chatQueue[0][0], this.chatQueue[0][1]);
 		this.lastMessageTime = Date.now();
 		this.chatQueue.splice(0, 1);
 		if (this.chatQueue.length < 1) clearInterval(this.processingChatQueue);
-	};
-
-	return Server;
-})();
-
-global.log = function (text, serverid, error) {
-	if (error) {
-		fs.appendFile('logs/error.txt', '[' + serverid + '] ' + text);
-		console.log(text);
-	} else if (Config.debug) {
-		console.log(text);
 	}
-	if (Config.log >= 2) fs.appendFile('logs/' + serverid + '.log', text + '\n');
-};
+}
 
 function connect(server) {
 	if (!Config.servers[server]) return console.log('Server "' + server + '" not found.');
 	server = Config.servers[server];
 	if (server.disabled) return;
-	log('Connecting to ' + server.id + '.', server.id);
-	if (Servers[server.id]) return log('Already connected to ' + server.id + '. Connection aborted.', server.id);
+	Tools.log('Connecting to ' + server.id + '.', server.id);
+	if (Servers[server.id]) return Tools.log('Already connected to ' + server.id + '. Connection aborted.', server.id);
 	Servers[server.id] = new Server(server);
-	log('Connecting to ' + server.id, server.id);
-	console.log('Connecting to ' + server.id);
 }
 global.connect = connect;
 
-function disconnect(server, reconnect) {
-	var serverid = toId(server);
-	if (!Servers[serverid]) return log('Not connected to ' + serverid + '.', serverid);
-	Servers[serverid].connection.close();
-	this.connected = false;
-	this.disconnecting = true;
-	if (Servers[serverid].ping) clearInterval(Servers[serverid].ping);
-	delete Servers[serverid];
-	log("Disconnected from " + serverid + ".", serverid);
-	if (reconnect) connect(serverid);
-}
-global.disconnect = disconnect;
+let count = 0;
 
-var count = 0;
-var connectTimer = setInterval(function () {
+if (!Object.keys(Config.servers)[count]) {
+	console.log("Please edit config.js and specify a server to connect to.");
+	return process.exit();
+}
+connect(Object.keys(Config.servers)[count]);
+count++;
+
+let connectTimer = setInterval(function () {
 	if (!Object.keys(Config.servers)[count]) return clearInterval(connectTimer);
 	connect(Object.keys(Config.servers)[count]);
 	count++;
-}, 5000); // this delay is to avoid problems logging into multiple servers so quickly
-
-
-/*for (var server in Config.servers) {
-	if (Config.servers[server].disabled) continue;
-	connect(Config.servers[server]);
-}*/
-
+}, 1000); // this delay is to avoid problems logging into multiple servers so quickly
 
 
 /*
  * static web server for displaying chat logs with the viewlogs command.
  */
 
-var nodestatic = require('node-static');
-var staticserver = new nodestatic.Server('./static');
-var app = require('http').createServer();
-var staticRequestHandler = function (request, response) {
+const nodestatic = require('node-static');
+const staticserver = new nodestatic.Server('./static');
+const app = require('http').createServer();
+let staticRequestHandler = function (request, response) {
 	request.resume();
 	request.addListener('end', function () {
 		if (/^\/([A-Za-z0-9][A-Za-z0-9-]*)\/?$/.test(request.url)) {

@@ -15,7 +15,7 @@ This is the source code for a Pokémon Showdown bot that has the capabilities of
 Installing
 ------------------------------------------------------------------------
 
-This bot requires you to have node.js (v0.12.7 or later) installed.
+This bot requires you to have node.js (v6.0.0 or later) installed.
 
 First, read config/config-example.js and edit it to suit your needs. Once you finish that make sure to save it as config.js.
 
