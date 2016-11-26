@@ -32,15 +32,11 @@ global.toId = function (text) {
 };
 
 for (let server in Config.servers) {
-	if (typeof Config.servers[server].rooms === Array) {
-		for (let room in Config.servers[server].rooms) {
-			Config.servers[server].rooms[room] = toId(Config.servers[server].rooms[room]);
-		}
+	if (Config.servers[server].rooms instanceof Array) {
+		Config.servers[server].rooms = Config.servers[server].rooms.map(toId);
 	}
-	if (typeof Config.servers[server].privaterooms === Array) {
-		for (let room in Config.servers[server].privaterooms) {
-			Config.servers[server].privaterooms[room] = toId(Config.servers[server].privaterooms[room]);
-		}
+	if (Config.servers[server].privaterooms instanceof Array) {
+		Config.servers[server].privaterooms = Config.servers[server].privaterooms.map(toId);
 	}
 }
 
