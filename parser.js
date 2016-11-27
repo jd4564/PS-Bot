@@ -1,7 +1,8 @@
 'use strict';
 
-const request = require('request');
+const https = require('https');
 const fs = require('fs');
+const querystring = require('querystring');
 
 global.Commands = require('./commands.js');
 fs.readdirSync('./plugins/').forEach(function (file) {
@@ -29,8 +30,7 @@ module.exports = class Parser {
 		let parts = data.split('|');
 		switch (parts[1]) {
 		case 'challstr':
-			this.challengekeyid = parts[2];
-			this.challenge = parts[3];
+			this.challenge = parts.splice(2).join('|');
 			server.send('/cmd rooms');
 			if (server.name !== '') this.login(server.name, server.pass);
 			if (server.name === '') {
@@ -247,52 +247,86 @@ module.exports = class Parser {
 	}
 
 	login(name, pass) {
+		console.log('Logging in to "' + this.serverid + '" as ' + (name === '' ? 'a guest.' : name + '.'));
 		let server = Servers[this.serverid];
-		let self = this;
 		let options;
-		if (pass !== '') {
-			options = {
-				headers: {
-					'content-type': 'application/x-www-form-urlencoded',
-				},
-				url: 'http://play.pokemonshowdown.com/action.php',
-				body: "act=login&name=" + encodeURIComponent(name) + "&pass=" + encodeURIComponent(pass) + "&challengekeyid=" + this.challengekeyid + "&challenge=" + this.challenge,
-			};
-			request.post(options, callback);
-		} else {
-			options = {
-				url: 'http://play.pokemonshowdown.com/action.php?act=getassertion&userid=' + toId(name) + '&challengekeyid=' + this.challengekeyid + '&challenge=' + this.challenge,
-			};
-			request(options, callback);
-		}
 
-		function callback(error, response, body) {
-			if (body === ';') return Tools.log('Failed to log in, name is registered', self.serverid);
-			if (body.length < 50) return Tools.log('Failed to log in: ' + body, self.serverid);
-			if (~body.indexOf('heavy load')) {
-				Tools.log('Failed to log in - login server is under heavy load. Retrying in one minute.', self.serverid);
-				setTimeout(function () {
-					self.login(name, pass);
-				}, 60 * 1000);
-				return;
+		if (pass !== '') {
+			let postData = querystring.stringify({
+				'act': 'login',
+				'name': encodeURIComponent(name),
+				'pass': encodeURIComponent(pass),
+				'challstr': this.challenge,
+			});
+			options = {
+				hostname: 'play.pokemonshowdown.com',
+				port: 443,
+				path: '/action.php',
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+					'Content-Length': Buffer.byteLength(postData),
+				},
+			};
+			let req = https.request(options, res => {
+				let data = '';
+				res.setEncoding('utf8');
+				res.on('data', chunk => {
+					data += chunk;
+				});
+				res.on('end', () => {
+					this.finishLogin(data, name, pass, server);
+				});
+			});
+
+			req.on('error', e => {
+				console.log('Failed to login to "' + this.serverid + '": ' + e.message);
+			});
+
+			req.write(postData);
+			req.end();
+		} else {
+			https.get('https://play.pokemonshowdown.com/action.php?act=getassertion&userid=' + toId(name) + '&challstr=' + this.challenge, res => {
+				let data = '';
+
+				res.on('data', chunk => {
+					data += chunk;
+				}).on('end', () => {
+					this.finishLogin(data, name, pass, server);
+				});
+			}).on('error', e => {
+				console.log('Failed to log in to "' + this.serverid + '": ' + e);
+			});
+		}
+	}
+
+	finishLogin(body, name, pass, server) {
+		if (body === ';') return console.log('Failed to log in to "' + this.serverid + '", name is registered');
+		if (body.includes('guest')) return console.log('Failed to log in to "' + this.serverid + '", invalid password.');
+		if (body.length < 50) return console.log('Failed to log in to "' + this.serverid + '": ' + body);
+		if (~body.indexOf('heavy load')) {
+			console.log('Failed to log in to "' + this.serverid + '"- login server is under heavy load. Retrying in one minute.');
+			setTimeout(function () {
+				this.login(name, pass);
+			}, 60 * 1000);
+			return;
+		}
+		if (body.substr(0, 16) === '<!DOCTYPE html>') {
+			console.log('Connection error 522 - retrying in one minute (' + this.serverid + ')');
+			setTimeout(function () {
+				this.login(name, pass);
+			}, 60 * 1000);
+			return;
+		}
+		try {
+			let json = JSON.parse(body.substr(1, body.length));
+			if (json.actionsuccess) {
+				server.send('/trn ' + name + ',0,' + json['assertion']);
+			} else {
+				console.log('Could not log in to "' + this.serverid + '": ' + JSON.stringify(json));
 			}
-			if (body.substr(0, 16) === '<!DOCTYPE html>') {
-				Tools.log('Connection error 522 - retrying in one minute', self.serverid);
-				setTimeout(function () {
-					self.login(name, pass);
-				}, 60 * 1000);
-				return;
-			}
-			try {
-				let json = JSON.parse(body.substr(1, body.length));
-				if (json.actionsuccess) {
-					server.send('/trn ' + name + ',0,' + json['assertion']);
-				} else {
-					Tools.log('Could not log in: ' + JSON.stringify(json), self.serverid);
-				}
-			} catch (e) {
-				server.send('/trn ' + name + ',0,' + body);
-			}
+		} catch (e) {
+			server.send('/trn ' + name + ',0,' + body);
 		}
 	}
 };
