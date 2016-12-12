@@ -16,12 +16,10 @@ module.exports = {
 	},
 	log: function (text, serverid, error) {
 		if (error) {
-			fs.appendFile('logs/error.txt', '[' + serverid + '] ' + text);
-			console.log(text);
-		} else if (Config.debug) {
-			console.log(text);
+			fs.appendFileSync('logs/error.txt', '[' + serverid + '] ' + text);
 		}
-		if (Config.log >= 2) fs.appendFile('logs/' + serverid + '.log', text + '\n');
+		fs.appendFileSync('logs/' + serverid + '.log', text + '\n');
+		console.log(text);
 	},
 	randomString: function (length) {
 		return Math.round((Math.pow(36, length + 1) - Math.random() * Math.pow(36, length))).toString(36).slice(1);

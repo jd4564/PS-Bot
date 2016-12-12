@@ -21,6 +21,7 @@ try {
 module.exports = class Parser {
 	constructor(serverid) {
 		this.serverid = serverid;
+		this.server = Servers[serverid];
 	}
 
 	parse(roomid, data) {
@@ -138,6 +139,9 @@ module.exports = class Parser {
 				this.logChat(toId(roomid), data.trim());
 			}
 			break;
+		case 'init':
+			Tools.log('Joined "' + roomid + '" on ' + this.serverid, this.serverid);
+			break;
 		case 'deinit':
 			if (server.leaving) {
 				server.leaving = false;
@@ -219,7 +223,8 @@ module.exports = class Parser {
 	}
 
 	logChat(room, data) {
-		if (Config.log < 1) return;
+		let server = Servers[this.serverid];
+		if (!server.logchat || (server.logchat && typeof server.logchat === 'object' && !server.logchat.includes(room))) return;
 		// I'm sure there's a better way to do this instead of a bunch of try-catch
 		// but this will work for now
 		let date = new Date();
@@ -239,15 +244,15 @@ module.exports = class Parser {
 			fs.mkdirSync('logs/chat/' + this.serverid + '/' + room, '0755');
 		}
 		try {
-			fs.statSync('logs/chat/' + this.serverid + '/' + room + '/' + Tools.toTimeStamp(date));
+			fs.statSync('logs/chat/' + this.serverid + '/' + room + '/' + Tools.toTimeStamp(date).split(' ')[0]);
 		} catch (e) {
-			fs.mkdirSync('logs/chat/' + this.serverid + '/' + room + '/' + Tools.toTimeStamp(date), '0755');
+			fs.mkdirSync('logs/chat/' + this.serverid + '/' + room + '/' + Tools.toTimeStamp(date).split(' ')[0], '0755');
 		}
-		fs.appendFile('logs/chat/' + this.serverid + '/' + room + '/' + Tools.toTimeStamp(date) + '/' + Tools.toTimeStamp(date) + '.txt', data + '\n');
+		fs.appendFileSync('logs/chat/' + this.serverid + '/' + room + '/' + Tools.toTimeStamp(date).split(' ')[0] + '/' + Tools.toTimeStamp(date).split(' ')[0] + '.txt', data + '\n');
 	}
 
 	login(name, pass) {
-		console.log('Logging in to "' + this.serverid + '" as ' + (name === '' ? 'a guest.' : name + '.'));
+		Tools.log('Logging in to "' + this.serverid + '" as ' + (name === '' ? 'a guest.' : name + '.'), this.serverid);
 		let server = Servers[this.serverid];
 		let options;
 
@@ -280,7 +285,7 @@ module.exports = class Parser {
 			});
 
 			req.on('error', e => {
-				console.log('Failed to login to "' + this.serverid + '": ' + e.message);
+				Tools.log('Failed to login to "' + this.serverid + '": ' + e.message, this.serverid, true);
 			});
 
 			req.write(postData);
@@ -295,24 +300,24 @@ module.exports = class Parser {
 					this.finishLogin(data, name, pass, server);
 				});
 			}).on('error', e => {
-				console.log('Failed to log in to "' + this.serverid + '": ' + e);
+				Tools.log('Failed to log in to "' + this.serverid + '": ' + e, this.serverid, true);
 			});
 		}
 	}
 
 	finishLogin(body, name, pass, server) {
-		if (body === ';') return console.log('Failed to log in to "' + this.serverid + '", name is registered');
-		if (body.includes('guest')) return console.log('Failed to log in to "' + this.serverid + '", invalid password.');
-		if (body.length < 50) return console.log('Failed to log in to "' + this.serverid + '": ' + body);
+		if (body === ';') return Tools.log('Failed to log in to "' + this.serverid + '", name is registered', this.serverid, true);
+		if (body.includes('guest')) return Tools.log('Failed to log in to "' + this.serverid + '", invalid password.', this.serverid, true);
+		if (body.length < 50) return Tools.log('Failed to log in to "' + this.serverid + '": ' + body, this.serverid, true);
 		if (~body.indexOf('heavy load')) {
-			console.log('Failed to log in to "' + this.serverid + '"- login server is under heavy load. Retrying in one minute.');
+			Tools.log('Failed to log in to "' + this.serverid + '"- login server is under heavy load. Retrying in one minute.', this.serverid, true);
 			setTimeout(function () {
 				this.login(name, pass);
 			}, 60 * 1000);
 			return;
 		}
 		if (body.substr(0, 16) === '<!DOCTYPE html>') {
-			console.log('Connection error 522 - retrying in one minute (' + this.serverid + ')');
+			Tools.log('Connection error 522 - retrying in one minute (' + this.serverid + ')', this.serverid, true);
 			setTimeout(function () {
 				this.login(name, pass);
 			}, 60 * 1000);
@@ -323,7 +328,7 @@ module.exports = class Parser {
 			if (json.actionsuccess) {
 				server.send('/trn ' + name + ',0,' + json['assertion']);
 			} else {
-				console.log('Could not log in to "' + this.serverid + '": ' + JSON.stringify(json));
+				Tools.log('Could not log in to "' + this.serverid + '": ' + JSON.stringify(json), this.serverid, true);
 			}
 		} catch (e) {
 			server.send('/trn ' + name + ',0,' + body);

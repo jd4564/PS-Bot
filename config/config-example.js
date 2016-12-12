@@ -9,13 +9,6 @@ exports.ip = '127.0.0.1';
 // The port you want the web server to run on
 exports.webport = 8000;
 
-// Log levels:
-// 0: no logging
-// 1: chat rooms only (required for viewlogs command)
-// 2: everything
-// Default: 1
-exports.log = 1;
-
 // A list of users that has full access to the bot
 exports.admins = ['user1', 'user2'];
 
@@ -46,6 +39,7 @@ exports.servers = {
 		privaterooms: ['aprivateroom'],
 		name: 'example-bot',
 		pass: 'example-pass',
+		logchat: true, // required for viewlogs command.
 	},
 	"anotherserver": {
 		id: 'anotherserver',
@@ -56,5 +50,6 @@ exports.servers = {
 		privaterooms: ['secretroom'],
 		name: 'Another Example Bot',
 		pass: 'Another Example Password',
+		logchat: ['lobby'], // only log chat in the room 'lobby'
 	},
 };

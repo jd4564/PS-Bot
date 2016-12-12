@@ -190,7 +190,7 @@ exports.commands = {
 };
 
 function devLog(text) {
-	fs.appendFile('logs/dev.log', '[' + new Date() + '] ' + text + '\n');
+	fs.appendFileSync('logs/dev.log', '[' + new Date() + '] ' + text + '\n');
 }
 
 function uncacheTree(root) {

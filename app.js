@@ -62,7 +62,7 @@ class Server {
 
 		this.connection.on('message', data => {
 			if (!data || data.length < 1) return;
-			Tools.log('> [' + this.id + '] ' + data, this.id);
+			if (Config.debug) Tools.log('> [' + this.id + '] ' + data, this.id);
 			let roomid = 'lobby';
 			if (data.charAt(0) === '>') {
 				roomid = data.substr(1, data.indexOf('\n') - 1);
@@ -81,7 +81,7 @@ class Server {
 		this.connection.on('close', (code, message) => {
 			this.connected = false;
 			if (this.disconnecting) return;
-			Tools.log('Connection lost to ' + this.id + ': ' + message, this.id);
+			Tools.log('Connection lost to ' + this.id + ': ' + message, this.id, true);
 			delete Servers[this.id];
 			if (!this.autoreconnect) return;
 			Tools.log('Reconnecting to ' + this.id + ' in one minute.', this.id);
@@ -119,7 +119,7 @@ class Server {
 			Tools.log('Sending "' + room + '|' + message + '" crashed: ' + e.stack, this.id);
 		}
 		this.lastMessageTime = Date.now();
-		Tools.log('> [' + this.id + '] ' + (room !== '' ? '[' + room + '] ' : '[] ') + message, this.id);
+		if (Config.debug) Tools.log('> [' + this.id + '] ' + (room !== '' ? '[' + room + '] ' : '[] ') + message, this.id);
 	}
 
 	processChatQueue() {
