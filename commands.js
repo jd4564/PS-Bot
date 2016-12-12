@@ -187,6 +187,63 @@ exports.commands = {
 			"Don't count on it."];
 		this.sendReply(helix[Math.floor(Math.random() * helix.length)]);
 	},
+
+	ignore: {
+		add: function (target, room, user) {
+			if (!this.can('admin')) return this.sendReply('Access denied.');
+			if (!target || !target.includes(',')) return this.sendReply("Usage: " + Servers[this.serverid].trigger + "ignore  add [user], [duration (ex: 1d)] - Makes the bot ignore a user, preventing them from using any commands.");
+
+			let targets = target.split(',');
+			for (let u in targets) targets[u].trim();
+			let userid = toId(targets[0]);
+			let duration = toId(targets[1]);
+
+			if (isNaN(duration.substr(0, duration.length - 1))) return this.sendReply("Invalid duration.");
+
+			if (userid.length < 1) return this.sendReply("That's not a valid username to ignore.");
+			if (this.ignoreList[userid]) return this.sendReply("That user is already ignored.");
+
+			let durationDate = Date.now();
+
+			switch (duration.charAt(1)) {
+			case 'm':
+				durationDate = duration.substr(0, duration.length - 1) * 60 * 1000;
+				break;
+			case 'h':
+				durationDate = duration.substr(0, duration.length - 1) * 60 * 60 * 1000;
+				break;
+			case 'd':
+				durationDate = duration.substr(0, duration.length - 1) * 24 * 60 * 60 * 1000;
+				break;
+			case 'w':
+				durationDate = duration.substr(0, duration.length - 1) * 7 * 24 * 60 * 60 * 1000;
+				break;
+			case 'y':
+				durationDate = duration.substr(0, duration.length - 1) * 365 * 24 * 60 * 60 * 1000;
+				break;
+			default:
+				return this.sendReply("Invalid duration.");
+			}
+
+			this.ignore(userid, durationDate);
+			this.sendReply("The user '" + targets[0] + "' has been added to the ignore list.");
+		},
+		del: function (target, room, user) {
+			if (!this.can('admin')) return this.sendReply("Access denied.");
+			if (!target) return this.sendReply("Usage: " + Servers[this.serverid].trigger + "ignore del [user] - Removes a user from the bots ignore list.");
+
+			let userid = toId(target);
+			if (!this.ignoreList[userid]) return this.sendReply("That user is not currently ignored.");
+
+			delete this.ignoreList[userid];
+			fs.writeFileSync('config/ignore.json', JSON.stringify(this.ignoreList));
+			this.sendReply("That user will no longer be ignored.");
+		},
+		help: function (target, room, user) {
+			this.sendReply('Usage: ' + Servers[this.serverid].trigger + 'ignore add [user], [duration (ex: 1d to ignore the user for a day)] - Makes the bot ignore all commands by a user.');
+			this.sendReply(Servers[this.serverid].trigger + 'ignore del [user] - Removes a user from the ignore list.');
+		},
+	},
 };
 
 function devLog(text) {

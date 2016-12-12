@@ -22,6 +22,15 @@ module.exports = class Parser {
 	constructor(serverid) {
 		this.serverid = serverid;
 		this.server = Servers[serverid];
+
+		try {
+			this.ignoreList = JSON.parse(fs.readFileSync('config/ignore.json', 'utf8'));
+			for (let u in this.ignoreList) {
+				if (this.ignoreList[u] < Date.now()) delete this.ignoreList[u];
+			}
+		} catch (e) {
+			this.ignoreList = {};
+		}
 	}
 
 	parse(roomid, data) {
@@ -198,25 +207,57 @@ module.exports = class Parser {
 	}
 
 	parseChat(room, user, message, pm) {
+		if (this.ignoreList[toId(user)] && this.ignoreList[toId(user)] < Date.now()) {
+			delete this.ignoreList[toId(user)];
+			fs.writeFileSync('config/ignore.json', JSON.stringify(this.ignoreList));
+		}
+		if (this.ignoreList[toId(user)]) return;
 		let server = Servers[this.serverid];
 		if (!pm) pm = '';
 		if (message.charAt(0) === server.trigger && !server.noReply && server.name !== '') {
 			let command = toId(message.substr(1, (~message.indexOf(' ') ? message.indexOf(' ') : message.length)));
-			let target = (~message.indexOf(' ') ? message.substr(message.indexOf(' '), message.length) : '');
-			if (Commands.commands[command]) {
-				while (typeof Commands.commands[command] !== 'function') {
-					command = Commands.commands[command];
+			let target = (~message.indexOf(' ') ? message.substr(message.indexOf(' '), message.length) : '').trim();
+
+			let commandHandler;
+			let curCommands = Commands.commands;
+
+			do {
+				if (curCommands[command]) {
+					commandHandler = curCommands[command];
+				} else {
+					commandHandler = undefined;
 				}
-				if (typeof Commands.commands[command] === 'function') {
-					try {
-						this.pm = pm;
-						this.user = user;
-						this.room = room;
-						Commands.commands[command].call(this, target, room, user, pm);
-					} catch (e) {
-						server.send(pm + e.stack.substr(0, e.stack.indexOf('\n')), room);
-						Tools.log(e.stack, server.id, true);
+				if (typeof commandHandler === 'string') {
+					// in case someone messed up, don't loop
+					commandHandler = curCommands[commandHandler];
+				}
+				if (commandHandler && typeof commandHandler === 'object') {
+					console.log('aaa');
+					let spaceIndex = target.indexOf(' ');
+					if (spaceIndex > 0) {
+						command = target.substr(0, spaceIndex).toLowerCase().trim();
+						target = target.substr(spaceIndex + 1);
+						commandHandler = commandHandler[command];
+						console.log('command1: ' + command);
+					} else {
+						command = target.toLowerCase().trim();
+						target = '';
+						console.log('command: ' + command);
+						commandHandler = commandHandler[command];
 					}
+					curCommands = commandHandler;
+				}
+			} while (commandHandler && typeof commandHandler === 'object');
+
+			if (typeof commandHandler === 'function') {
+				try {
+					this.pm = pm;
+					this.user = user;
+					this.room = room;
+					commandHandler.call(this, target, room, user, pm);
+				} catch (e) {
+					server.send(pm + e.stack.substr(0, e.stack.indexOf('\n')), room);
+					Tools.log(e.stack, server.id, true);
 				}
 			}
 		}
@@ -333,5 +374,10 @@ module.exports = class Parser {
 		} catch (e) {
 			server.send('/trn ' + name + ',0,' + body);
 		}
+	}
+
+	ignore(user, duration) {
+		this.ignoreList[user] = Date.now() + duration;
+		fs.writeFileSync('config/ignore.json', JSON.stringify(this.ignoreList));
 	}
 };
