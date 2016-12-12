@@ -40,6 +40,7 @@ exports.servers = {
 		name: 'example-bot',
 		pass: 'example-pass',
 		logchat: true, // required for viewlogs command.
+		trusted: false, // change to true to enable developer commands on this server
 	},
 	"anotherserver": {
 		id: 'anotherserver',

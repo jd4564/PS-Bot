@@ -75,7 +75,7 @@ exports.commands = {
 	// Developer commands
 	js: 'eval',
 	eval: function (target, room, user, pm) {
-		if (!this.can('admin')) return this.sendReply("Access denied.");
+		if (!this.can('admin') || !Servers[this.serverid].trusted) return this.sendReply("Access denied.");
 		if (!target) return this.sendReply("Usage: " + Config.trigger + "eval [target]");
 		try {
 			let result = eval(target);
@@ -87,7 +87,7 @@ exports.commands = {
 	},
 
 	kill: function (target, room, user, pm) {
-		if (!this.can('admin')) return this.sendReply("Access denied.");
+		if (!this.can('admin') || !Servers[this.serverid].trusted) return this.sendReply("Access denied.");
 		devLog(user + " used " + Config.trigger + "kill");
 		setTimeout(function () {
 			process.exit();
@@ -95,7 +95,7 @@ exports.commands = {
 	},
 
 	reload: function (target, room, user, pm) {
-		if (!this.can('admin')) return this.sendReply("Access denied.");
+		if (!this.can('admin') || !Servers[this.serverid].trusted) return this.sendReply("Access denied.");
 		try {
 			uncacheTree('./commands.js');
 			uncacheTree('./parser.js');
