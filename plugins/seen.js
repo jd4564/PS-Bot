@@ -20,8 +20,8 @@ function updateSeen(user, action, server, room) {
 	db.run("INSERT OR IGNORE INTO users (userid, name, lastOnline, lastOnlineServer, lastOnlineAction, room) VALUES ($userid, $name, $lastOnline, $lastOnlineServer, $lastOnlineAction, $room)",
 	{$userid: userid, $name: user, $lastOnline: date, $lastOnlineServer: server, $lastOnlineAction: action, $room: room}, function (err) {
 		if (err) return console.log('updateSeen 1: ' + err);
-		db.run("UPDATE users SET name = $name, lastOnline = $lastOnline, lastOnlineServer = $lastOnlineServer, lastOnlineAction = $lastOnlineAction WHERE userid=$userid",
-		{$userid: userid, $name: user, $lastOnline: date, $lastOnlineServer: server, $lastOnlineAction: action}, function (err) {
+		db.run("UPDATE users SET name = $name, lastOnline = $lastOnline, lastOnlineServer = $lastOnlineServer, lastOnlineAction = $lastOnlineAction, room = $room WHERE userid=$userid",
+		{$userid: userid, $name: user, $lastOnline: date, $lastOnlineServer: server, $lastOnlineAction: action, $room: room}, function (err) {
 			if (err) console.log('updateSeen 2: ' + err);
 		});
 	});
