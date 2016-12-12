@@ -13,6 +13,7 @@ function lastSeen(user, callback) {
 }
 
 function updateSeen(user, action, server, room) {
+	if (!Servers[toId(server)].enableSeen) return;
 	let userid = toId(user);
 	if (userid === toId(Servers[toId(server)].name) || userid.substr(0, 5) === 'guest') return;
 	let date = Date.now();

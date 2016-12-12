@@ -41,6 +41,7 @@ exports.servers = {
 		pass: 'example-pass',
 		logchat: true, // required for viewlogs command.
 		trusted: false, // change to true to enable developer commands on this server
+		enableSeen: true, // whether tracking names for seen should be enabled on this server.
 	},
 	"anotherserver": {
 		id: 'anotherserver',
