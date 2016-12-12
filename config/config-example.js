@@ -39,6 +39,7 @@ exports.servers = {
 		privaterooms: ['aprivateroom'],
 		name: 'example-bot',
 		pass: 'example-pass',
+		trigger: '.', // This is the symbol that goes in front of all commands
 		logchat: true, // required for viewlogs command.
 		trusted: false, // change to true to enable developer commands on this server
 		enableSeen: true, // whether tracking names for seen should be enabled on this server.
@@ -52,6 +53,7 @@ exports.servers = {
 		privaterooms: ['secretroom'],
 		name: 'Another Example Bot',
 		pass: 'Another Example Password',
+		trigger: '*', // This is the symbol that goes in front of all commands
 		logchat: ['lobby'], // only log chat in the room 'lobby'
 	},
 };

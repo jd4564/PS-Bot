@@ -200,7 +200,7 @@ module.exports = class Parser {
 	parseChat(room, user, message, pm) {
 		let server = Servers[this.serverid];
 		if (!pm) pm = '';
-		if (message.charAt(0) === Config.trigger && !server.noReply && server.name !== '') {
+		if (message.charAt(0) === server.trigger && !server.noReply && server.name !== '') {
 			let command = toId(message.substr(1, (~message.indexOf(' ') ? message.indexOf(' ') : message.length)));
 			let target = (~message.indexOf(' ') ? message.substr(message.indexOf(' '), message.length) : '');
 			if (Commands.commands[command]) {
