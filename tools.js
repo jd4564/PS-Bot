@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const http = require('http');
+const https = require('https');
 
 let regdateCache = {};
 try {
@@ -85,11 +86,12 @@ module.exports = {
 		if (typeof callback !== 'function') return false;
 		let reqOpts = {
 			hostname: 'hastebin.com',
+			port: 443,
 			method: 'POST',
 			path: '/documents',
 		};
 
-		let req = http.request(reqOpts, function (res) {
+		let req = https.request(reqOpts, function (res) {
 			res.on('data', function (chunk) {
 				// CloudFlare can go to hell for sending the body in a header request like this
 				if (typeof chunk === 'string' && chunk.substr(0, 15) === '<!DOCTYPE html>') return callback('Error uploading to Hastebin.');
