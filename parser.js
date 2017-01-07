@@ -352,14 +352,14 @@ module.exports = class Parser {
 		if (body.length < 50) return Tools.log('Failed to log in to "' + this.serverid + '": ' + body, this.serverid, true);
 		if (~body.indexOf('heavy load')) {
 			Tools.log('Failed to log in to "' + this.serverid + '"- login server is under heavy load. Retrying in one minute.', this.serverid, true);
-			setTimeout(function () {
+			setTimeout(() => {
 				this.login(name, pass);
 			}, 60 * 1000);
 			return;
 		}
 		if (body.substr(0, 16) === '<!DOCTYPE html>') {
 			Tools.log('Connection error 522 - retrying in one minute (' + this.serverid + ')', this.serverid, true);
-			setTimeout(function () {
+			setTimeout(() => {
 				this.login(name, pass);
 			}, 60 * 1000);
 			return;
