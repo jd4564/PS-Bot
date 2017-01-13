@@ -3,6 +3,7 @@
 const https = require('https');
 const fs = require('fs');
 const querystring = require('querystring');
+const moment = require('moment');
 
 global.Commands = require('./commands.js');
 fs.readdirSync('./plugins/').forEach(function (file) {
@@ -269,6 +270,8 @@ module.exports = class Parser {
 		// I'm sure there's a better way to do this instead of a bunch of try-catch
 		// but this will work for now
 		let date = new Date();
+		let month = moment(date).format('MM-YYYY');
+		let fullDate = moment(date).format('DD-MM-YYYY');
 		try {
 			fs.statSync('logs/chat');
 		} catch (e) {
@@ -285,11 +288,11 @@ module.exports = class Parser {
 			fs.mkdirSync('logs/chat/' + this.serverid + '/' + room, '0755');
 		}
 		try {
-			fs.statSync('logs/chat/' + this.serverid + '/' + room + '/' + Tools.toTimeStamp(date).split(' ')[0]);
+			fs.statSync('logs/chat/' + this.serverid + '/' + room + '/' + month);
 		} catch (e) {
-			fs.mkdirSync('logs/chat/' + this.serverid + '/' + room + '/' + Tools.toTimeStamp(date).split(' ')[0], '0755');
+			fs.mkdirSync('logs/chat/' + this.serverid + '/' + room + '/' + month, '0755');
 		}
-		fs.appendFileSync('logs/chat/' + this.serverid + '/' + room + '/' + Tools.toTimeStamp(date).split(' ')[0] + '/' + Tools.toTimeStamp(date).split(' ')[0] + '.txt', data + '\n');
+		fs.appendFileSync('logs/chat/' + this.serverid + '/' + room + '/' + month + '/' + fullDate + '.txt', data + '\n');
 	}
 
 	login(name, pass) {

@@ -43,20 +43,20 @@ exports.commands = {
 
 	// TODO: refactor viewlogs
 	viewlogs: function (target, room, user, pm) {
-		if (!target) return this.sendReply("Usage: " + Config.trigger + "viewlogs [server], [room], [DD-MM-YYYY]");
+		if (!target) return this.sendReply("Usage: " + this.trigger + "viewlogs [server], [room], [DD-MM-YYYY]");
 		let targets = target.split(',');
 		for (let u in targets) targets[u] = targets[u].trim();
 		if (!targets[2]) return this.sendReply("Usage: " + Config.trigger + " viewlogs [server], [room], [DD-MM-YYYY]");
-		if (!Config.server[targets[0]] && !this.can('admin')) return this.sendReply("Access denied.");
-		if (Config.server[targets[0]] && Config.server[targets[0]].privaterooms.includes(toId(targets[1])) && !this.can('admin')) return this.sendReply("Access denied.");
+		if (!Config.servers[targets[0]] && !this.can('admin')) return this.sendReply("Access denied.");
+		if (Config.servers[targets[0]] && Config.servers[targets[0]].privaterooms.includes(toId(targets[1])) && !this.can('admin')) return this.sendReply("Access denied.");
 		if (toId(targets[2]) === 'today' || toId(targets[2]) === 'yesterday') {
 			let date = new Date();
 			if (toId(targets[2]) === 'yesterday') date.setDate(date.getDate() - 1);
-			targets[2] = date.format('{dd}-{MM}-{yyyy}');
+			targets[2] = moment(date).format('DD-MM-YYYY');
 		}
 		let dateSplit = targets[2].split('-');
 		if (!dateSplit[2]) return this.sendReply("Incorrect date format.");
-		let path = "logs/chat/" + toId(targets[0]) + "/" + toId(targets[1]) + "/" + dateSplit[2] + "-" + dateSplit[1] + "/" + dateSplit[2] + "-" + dateSplit[1] + "-" + dateSplit[0] + ".txt";
+		let path = "logs/chat/" + toId(targets[0]) + "/" + toId(targets[1]) + "/" + dateSplit[1] + "-" + dateSplit[2] + "/" + targets[2] + ".txt";
 		let filename = Tools.randomString(8) + '.txt';
 
 		fs.readFile(path, (err, data) => {

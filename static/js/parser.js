@@ -1,7 +1,8 @@
+/* eslint-disable */
 (function($) {
     function hashColor(name) {
         var name = toId(name);
-        if (Config.customcolors[name]) name = Config.customcolors[name];
+        //if (Config.customcolors[name]) name = Config.customcolors[name];
         var hash = MD5(name);
         var H = parseInt(hash.substr(4, 4), 16) % 360;
         var S = parseInt(hash.substr(0, 4), 16) % 50 + 50;
