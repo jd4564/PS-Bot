@@ -24,10 +24,19 @@ exports.defaultPermissions = {
 	'invite': '%',
 };
 
+/*exports.mysql = {
+	host: 'localhost',
+	port: 3306,
+	dbName: 'psbot',
+	user: 'username',
+	password: 'password',
+};*/
+
 // A list of servers you want your bot to connect to
 exports.servers = {
 	"exampleserver": { // Put the servers id here. The id is the name with spaces removed and letters converted to lowercase
 		id: 'exampleserver', // Put the server id here as well
+		serverName: 'Example Server',
 		ip: '127.0.0.1',
 		port: 8000,
 		autoreconnect: true,
@@ -46,6 +55,7 @@ exports.servers = {
 	},
 	"anotherserver": {
 		id: 'anotherserver',
+		serverName: 'Another Server',
 		ip: '127.0.0.2',
 		port: 8000,
 		autoreconnect: true,

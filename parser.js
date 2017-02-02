@@ -5,6 +5,34 @@ const fs = require('fs');
 const querystring = require('querystring');
 const moment = require('moment');
 
+let db;
+
+if (Config.mysql) {
+	const mysql = require('mysql');
+	db = mysql.createConnection({
+		host: Config.mysql.host,
+		port: Config.mysql.port,
+		user: Config.mysql.user,
+		password: Config.mysql.password,
+	});
+
+	db.connect(function (err) {
+		if (err) {
+			return console.error('(parser.js) error connecting to mysql server: ' + err.stack);
+		}
+
+		db.query('CREATE DATABASE IF NOT EXISTS ' + Config.mysql.dbName + ';', function (error, results, fields) {
+			if (error) throw error;
+			db.changeUser({database: Config.mysql.dbName}, function (err) {
+				if (err) throw err;
+				db.query('CREATE TABLE IF NOT EXISTS logs (id INT PRIMARY KEY AUTO_INCREMENT, date BIGINT, server VARCHAR(32), room VARCHAR(100), user VARCHAR(32), userid VARCHAR(19), messageType VARCHAR(20), message TEXT)', function (error, results, fields) {
+					if (err) throw err;
+				});
+			});
+		});
+	});
+}
+
 global.Commands = require('./commands.js');
 fs.readdirSync('./plugins/').forEach(function (file) {
 	if (file.substr(-3) === '.js') Object.assign(Commands.commands, require('./plugins/' + file).commands);
@@ -146,8 +174,9 @@ module.exports = class Parser {
 			break;
 		case 'N':
 			if (~data.indexOf('\n')) {
-				this.logChat(toId(roomid), data.trim());
+				this.logChat(toId(roomid), parts[1], data.trim());
 			}
+			if (toId(parts[3]) !== toId(parts[2])) Tools.updateSeen(toId(parts[3]), "changing names to " + parts[2].substr(1), this.serverid, roomid);
 			break;
 		case 'init':
 			Tools.log('Joined "' + roomid + '" on ' + this.serverid, this.serverid);
@@ -267,32 +296,71 @@ module.exports = class Parser {
 	logChat(room, data) {
 		let server = Servers[this.serverid];
 		if (!server.logchat || (server.logchat && typeof server.logchat === 'object' && !server.logchat.includes(room))) return;
-		// I'm sure there's a better way to do this instead of a bunch of try-catch
-		// but this will work for now
-		let date = new Date();
-		let month = moment(date).format('MM-YYYY');
-		let fullDate = moment(date).format('DD-MM-YYYY');
-		try {
-			fs.statSync('logs/chat');
-		} catch (e) {
-			fs.mkdirSync('logs/chat', '0755');
+		if (!Config.mysql) {
+			// I'm sure there's a better way to do this instead of a bunch of try-catch
+			// but this will work for now
+			let date = new Date();
+			let month = moment(date).format('MM-YYYY');
+			let fullDate = moment(date).format('DD-MM-YYYY');
+			try {
+				fs.statSync('logs/chat');
+			} catch (e) {
+				fs.mkdirSync('logs/chat', '0755');
+			}
+			try {
+				fs.statSync('logs/chat/' + this.serverid);
+			} catch (e) {
+				fs.mkdirSync('logs/chat/' + this.serverid, '0755');
+			}
+			try {
+				fs.statSync('logs/chat/' + this.serverid + '/' + room);
+			} catch (e) {
+				fs.mkdirSync('logs/chat/' + this.serverid + '/' + room, '0755');
+			}
+			try {
+				fs.statSync('logs/chat/' + this.serverid + '/' + room + '/' + month);
+			} catch (e) {
+				fs.mkdirSync('logs/chat/' + this.serverid + '/' + room + '/' + month, '0755');
+			}
+			fs.appendFileSync('logs/chat/' + this.serverid + '/' + room + '/' + month + '/' + fullDate + '.txt', data + '\n');
+		} else {
+			let user = '';
+			let userid = '';
+			let message = '';
+			if (data.charAt(0) !== '|') data = '||' + data;
+			let parts = data.split('|');
+			let messageType = parts[1];
+
+			switch (parts[1]) {
+			case 'c':
+				user = parts[2].substr(1);
+				message = parts.slice(3).join('|');
+				break;
+			case 'c:':
+				user = parts[3].substr(1);
+				message = parts.slice(4).join('|');
+				break;
+			case 'L':
+			case 'l':
+			case 'J':
+			case 'j':
+				user = parts[2].substr(1);
+				break;
+			case 'raw':
+			case 'html':
+				message = parts.slice(2).join('|');
+				break;
+			}
+			if (user !== '') userid = toId(user);
+			let query = 'INSERT INTO logs (date, server, room, user, userid, messageType, message) VALUES (' + Date.now() + ', ' + db.escape(this.serverid) +
+				', ' + db.escape(room) + ', ' + db.escape(user) + ', "' + userid + '", ' + db.escape(messageType) + ', ' + db.escape(message) + ')';
+			db.query(query, function (err) {
+				if (err) {
+					fs.appendFileSync('logs/error.txt', 'logChat: ' + err + '\n');
+					return console.log('logChat: ' + err);
+				}
+			});
 		}
-		try {
-			fs.statSync('logs/chat/' + this.serverid);
-		} catch (e) {
-			fs.mkdirSync('logs/chat/' + this.serverid, '0755');
-		}
-		try {
-			fs.statSync('logs/chat/' + this.serverid + '/' + room);
-		} catch (e) {
-			fs.mkdirSync('logs/chat/' + this.serverid + '/' + room, '0755');
-		}
-		try {
-			fs.statSync('logs/chat/' + this.serverid + '/' + room + '/' + month);
-		} catch (e) {
-			fs.mkdirSync('logs/chat/' + this.serverid + '/' + room + '/' + month, '0755');
-		}
-		fs.appendFileSync('logs/chat/' + this.serverid + '/' + room + '/' + month + '/' + fullDate + '.txt', data + '\n');
 	}
 
 	login(name, pass) {
