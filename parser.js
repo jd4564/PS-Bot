@@ -371,7 +371,7 @@ module.exports = class Parser {
 		if (pass !== '') {
 			let postData = querystring.stringify({
 				'act': 'login',
-				'name': encodeURIComponent(name),
+				'name': toId(name),
 				'pass': encodeURIComponent(pass),
 				'challstr': this.challenge,
 			});
