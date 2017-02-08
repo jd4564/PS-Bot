@@ -42,7 +42,7 @@ for (let server in Config.servers) {
 
 
 class Server {
-	 constructor(server) {
+	constructor(server) {
 		for (let u in server) this[u] = server[u];
 		this.parser = new Parser(server.id);
 		this.roomList = {'official': [], 'chat': []};

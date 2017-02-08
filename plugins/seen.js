@@ -9,10 +9,10 @@ if (!Config.mysql) {
 } else {
 	const mysql = require('mysql');
 	db = mysql.createConnection({
-	  host: Config.mysql.host,
-	  port: Config.mysql.port,
-	  user: Config.mysql.user,
-	  password: Config.mysql.password,
+		host: Config.mysql.host,
+		port: Config.mysql.port,
+		user: Config.mysql.user,
+		password: Config.mysql.password,
 	});
 
 	db.connect(function (err) {
