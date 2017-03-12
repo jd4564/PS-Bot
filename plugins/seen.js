@@ -32,7 +32,6 @@ if (!Config.mysql) {
 	});
 }
 
-const moment = require('moment');
 const uuid = require('uuid/v4');
 
 let lastUpdated = {};
@@ -125,7 +124,7 @@ exports.commands = {
 		} else {
 			lastSeen(targetid, data => {
 				if (!data) return this.sendReply(Tools.sanitize(target) + " has never been seen before.");
-				return this.sendReply(Tools.sanitize(data.name) + " was last seen " + data.action + (data.action !== "joining" && data.action !== "leaving" ? " in " : " ") + " **" + data.room + "** on **" + data.server + "** " + moment(data.date).fromNow());
+				return this.sendReply(Tools.sanitize(data.name) + " was last seen " + data.action + (data.action !== "joining" && data.action !== "leaving" ? " in " : " ") + " **" + data.room + "** on **" + data.server + "** " + Tools.toDurationString(Date.now() - data.date) + " ago");
 			});
 		}
 	},
