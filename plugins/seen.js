@@ -124,7 +124,7 @@ exports.commands = {
 		} else {
 			lastSeen(targetid, data => {
 				if (!data) return this.sendReply(Tools.sanitize(target) + " has never been seen before.");
-				return this.sendReply(Tools.sanitize(data.name) + " was last seen " + data.action + (data.action !== "joining" && data.action !== "leaving" ? " in " : " ") + " **" + data.room + "** on **" + data.server + "** " + Tools.toDurationString(Date.now() - data.date) + " ago");
+				return this.sendReply(Tools.sanitize(data.name) + " was last seen " + data.action + (data.action !== "joining" && data.action !== "leaving" ? " in " : " ") + " **" + data.room + "** on **" + data.server + "** " + Tools.toDurationString((Date.now() - data.date), {precision: true}) + " ago");
 			});
 		}
 	},
