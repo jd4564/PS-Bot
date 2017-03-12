@@ -8,7 +8,6 @@ let regdateCache = {};
 try {
 	regdateCache = JSON.parse(fs.readFileSync('config/regdate.json', 'utf8'));
 } catch (e) {}
-
 module.exports = {
 	sanitize: function (message) {
 		if (message.charAt(0) === '/') message = '/' + message;
@@ -73,13 +72,21 @@ module.exports = {
 		// https://github.com/tc39/ecma402/issues/47
 		const date = new Date(+number);
 		const parts = [date.getUTCFullYear() - 1970, date.getUTCMonth(), date.getUTCDate() - 1, date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds()];
+		const roundingBoundaries = [6, 15, 12, 30, 30];
 		const unitNames = ["second", "minute", "hour", "day", "month", "year"];
 		const positiveIndex = parts.findIndex(elem => elem > 0);
+		const precision = (options && options.precision ? options.precision : parts.length);
 		if (options && options.hhmmss) {
 			let string = parts.slice(positiveIndex).map(value => value < 10 ? "0" + value : "" + value).join(":");
 			return string.length === 2 ? "00:" + string : string;
 		}
-		return parts.slice(positiveIndex).reverse().map((value, index) => value ? value + " " + unitNames[index] + (value > 1 ? "s" : "") : "").reverse().join(" ").trim();
+		// round least significant displayed unit
+		if (positiveIndex + precision < parts.length && precision > 0 && positiveIndex >= 0) {
+			if (parts[positiveIndex + precision] >= roundingBoundaries[positiveIndex + precision - 1]) {
+				parts[positiveIndex + precision - 1]++;
+			}
+		}
+		return parts.slice(positiveIndex).reverse().map((value, index) => value ? value + " " + unitNames[index] + (value > 1 ? "s" : "") : "").reverse().slice(0, precision).join(" ").trim();
 	},
 	// uploadToHastebin function by TalkTakesTime (https://github.com/TalkTakesTime/Pokemon-Showdown-Bot)
 	uploadToHastebin: function (toUpload, callback) {
