@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs');
-const http = require('http');
 const https = require('https');
 
 let regdateCache = {};
@@ -42,11 +41,11 @@ module.exports = {
 		if (regdateCache[target]) return callback(regdateCache[target]);
 		let options = {
 			host: 'pokemonshowdown.com',
-			port: 80,
+			port: 443,
 			path: '/users/' + target + '.json',
 			method: 'GET',
 		};
-		http.get(options, function (res) {
+		https.get(options, function (res) {
 			let data = '';
 			res.on('data', function (chunk) {
 				data += chunk;
