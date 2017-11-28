@@ -58,39 +58,40 @@ function updateSeen(user, action, server, room) {
 	let date = Date.now();
 	if (lastUpdated[userid] && (date - lastUpdated[userid]) < 1000) return;
 	lastUpdated[userid] = date;
+
 	if (!Config.mysql) {
 		db.run("INSERT OR IGNORE INTO users (userid, name, lastOnline, lastOnlineServer, lastOnlineAction, room) VALUES ($userid, $name, $lastOnline, $lastOnlineServer, $lastOnlineAction, $room)",
-		{$userid: userid, $name: user, $lastOnline: date, $lastOnlineServer: Servers[toId(server)].serverName, $lastOnlineAction: action, $room: room}, function (err) {
-			if (err) return console.log('updateSeen 1: ' + err);
-			db.run("UPDATE users SET name = $name, lastOnline = $lastOnline, lastOnlineServer = $lastOnlineServer, lastOnlineAction = $lastOnlineAction, room = $room WHERE userid=$userid",
 			{$userid: userid, $name: user, $lastOnline: date, $lastOnlineServer: Servers[toId(server)].serverName, $lastOnlineAction: action, $room: room}, function (err) {
-				if (err) console.log('updateSeen 2: ' + err);
+				if (err) return console.log('updateSeen 1: ' + err);
+				db.run("UPDATE users SET name = $name, lastOnline = $lastOnline, lastOnlineServer = $lastOnlineServer, lastOnlineAction = $lastOnlineAction, room = $room WHERE userid=$userid",
+					{$userid: userid, $name: user, $lastOnline: date, $lastOnlineServer: Servers[toId(server)].serverName, $lastOnlineAction: action, $room: room}, function (err) {
+						if (err) console.log('updateSeen 2: ' + err);
+					});
 			});
-		});
 	} else {
-		let mysqlQuery = 'INSERT INTO users (id, firstSeen, userid, name, lastOnline, lastOnlineServer, lastOnlineAction, room) VALUES (' + db.escape(uuid()) + ', ' + date +
-			', "' + userid + '", ' + db.escape(user) + ', ' + date + ', ' + db.escape(Servers[toId(server)].serverName) + ', ' + db.escape(action) + ', ' + db.escape(room) + ') ' +
-			'ON DUPLICATE KEY UPDATE name=' + db.escape(user) + ', lastOnline=' + date + ', lastOnlineServer=' + db.escape(Servers[toId(server)].serverName) + ', lastOnlineAction=' + db.escape(action) +
-			', room=' + db.escape(room);
+		let mysqlQuery = `INSERT INTO users (id, firstSeen, userid, name, lastOnline, lastOnlineServer, lastOnlineAction, room) VALUES (${db.escape(uuid())}, ` +
+		`${date}, "${userid}", ${db.escape(user)}, ${date}, ${db.escape(Servers[toId(server)].serverName)}, ${db.escape(action)}, ${db.escape(room)}) ` +
+		`ON DUPLICATE KEY UPDATE name=${db.escape(user)}, lastOnline=${date}, lastOnlineServer=${db.escape(Servers[toId(server)].serverName)}, ` +
+		`lastOnlineAction=${db.escape(action)}, room=${db.escape(room)}`;
 
 		db.query(mysqlQuery, function (err, results, fields) {
 			if (err) return console.log('updateSeen 3: ' + err);
 			if (action.includes('changing names')) {
 				let newName = action.replace(/changing names to /, '');
-				let mysqlQuery2 = 'INSERT INTO users (id, firstSeen, userid, name, lastOnline, lastOnlineServer, lastOnlineAction, room) VALUES (' + db.escape(uuid()) + ', ' + date +
-					', "' + toId(newName) + '", ' + db.escape(newName) + ', ' + date + ', ' + db.escape(Servers[toId(server)].serverName) + ', "changing names from ' + db.escape(user) + '", ' + db.escape(room) + ') ' +
-					'ON DUPLICATE KEY UPDATE name=' + db.escape(newName) + ', lastOnline=' + date + ', lastOnlineServer=' + db.escape(Servers[toId(server)].serverName) + ', lastOnlineAction="changing names from ' + db.escape(user) + '"' +
-					', room=' + db.escape(room);
+				let mysqlQuery2 = `INSERT INTO users (id, firstSeen, userid, name, lastOnline, lastOnlineServer, lastOnlineAction, room) VALUES (${db.escape(uuid())}, ${date}` +
+				`, "${toId(newName)}", ${db.escape(newName)}, ${date}, ${db.escape(Servers[toId(server)].serverName)}, "changing names from ${db.escape(user)}", ` +
+				`${db.escape(room)}) ON DUPLICATE KEY UPDATE name=${db.escape(newName)}, lastOnline=${date}, lastOnlineServer=${db.escape(Servers[toId(server)].serverName)}, ` +
+				`lastOnlineAction="changing names from ${db.escape(user)}", room=${db.escape(room)}`;
 				db.query(mysqlQuery2, function (err) {
 					if (err) return console.log('updateSeen 4: ' + err);
-					db.query('SELECT * FROM users WHERE userid="' + userid + '" OR userid="' + toId(newName) + '";', function (err, rows) {
+					db.query(`SELECT * FROM users WHERE userid="${userid}" OR userid="${toId(newName)}";`, function (err, rows) {
 						if (err) throw err;
 						if (rows[0].firstSeen < rows[1].firstSeen) {
-							db.query('UPDATE users SET id=' + db.escape(rows[0].id) + ' WHERE id=' + db.escape(rows[1].id), function (err) {
+							db.query(`UPDATE users SET id=${db.escape(rows[0].id)} WHERE id=${db.escape(rows[1].id)}`, function (err) {
 								if (err) return console.log('updateSeen 5: ' + err);
 							});
 						} else {
-							db.query('UPDATE users SET id=' + db.escape(rows[1].id) + ' WHERE id=' + db.escape(rows[0].id), function (err) {
+							db.query(`UPDATE users SET id=${db.escape(rows[1].id)} WHERE id=${db.escape(rows[0].id)}`, function (err) {
 								if (err) return console.log('updateSeen 6: ' + err);
 							});
 						}
@@ -132,7 +133,7 @@ exports.commands = {
 
 	alts: function (target, room, user, pm) {
 		if (!this.can('admin')) return this.sendReply("Access denied.");
-		if (!target) return this.sendReply("Usage: " + this.server.trigger + "alts [user]");
+		if (!target) return this.sendReply("Usage: " + Servers[this.serverid].trigger + "alts [user]");
 		let targetId = toId(target);
 
 		if (targetId < 1 || targetId > 1) return this.sendReply("Names may not be less than one character or greater than 19.");
