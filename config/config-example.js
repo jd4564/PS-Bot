@@ -39,6 +39,7 @@ exports.servers = {
 		serverName: 'Example Server',
 		ip: '127.0.0.1',
 		port: 8000,
+		ssl: false, // change to true if connecting via ssl
 		autoreconnect: true,
 		// You can either specify each room you want the bot to join
 		// or you can have it join all official/unofficial rooms by using

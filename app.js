@@ -49,7 +49,7 @@ class Server {
 		this.connected = false;
 		this.joinedRooms = false;
 
-		this.connection = new WebSocket('ws://' + this.ip + ':' + this.port + '/showdown/websocket');
+		this.connection = new WebSocket((this.ssl ? 'wss' : 'ws') + '://' + this.ip + ':' + this.port + '/showdown/websocket');
 
 		this.connection.on('open', () => {
 			Tools.log('Connected to ' + this.id, this.id);
