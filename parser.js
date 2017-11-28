@@ -130,7 +130,7 @@ module.exports = class Parser {
 			if (data.substr(0, 50) !== '<div class="infobox"><div class="infobox-limited">') {
 				this.logChat(toId(roomid), data);
 			}
-			if (data.match(new RegExp(toId(server.name) + "\<\/font\>\<\/b\> has [0-9]+ bucks")) && this.transferAllBucks) {
+			if (data.match(new RegExp(toId(server.name) + "</font></b> has [0-9]+ bucks")) && this.transferAllBucks) {
 				let amount = data.match(/[0-9]+ buck/g)[0].replace(/[a-z]/gi, '').trim();
 				this.send("/transferbucks " + this.transferAllBucks + ", " + amount);
 				delete this.transferAllBucks;
