@@ -3,8 +3,6 @@
 const WebSocket = require('ws');
 const fs = require('fs');
 
-global.sqlite3 = require('sqlite3');
-global.Tools = require('./tools.js');
 try {
 	global.Config = require('./config/config.js');
 } catch (err) {
@@ -13,6 +11,7 @@ try {
 	return console.log("Please edit config/config.js before running the bot");
 }
 if (Config.servers['exampleserver']) return console.log("Please edit config/config.js before running the bot");
+global.Tools = require('./tools.js');
 global.Parser = require('./parser.js');
 global.Servers = {};
 
@@ -39,7 +38,6 @@ for (let server in Config.servers) {
 		Config.servers[server].privaterooms = Config.servers[server].privaterooms.map(toId);
 	}
 }
-
 
 class Server {
 	constructor(server) {

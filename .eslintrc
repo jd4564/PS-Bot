@@ -13,8 +13,7 @@
 	},
 	"globals": {
 		"Config": false, "toId": false, "Parser": false, "Tools": false,
-		"Servers": false, "disconnect": false, "connect": false, "sqlite3": false,
-		"Commands": false,
+		"Servers": false, "disconnect": false, "connect": false, "Commands": false
 	},
 	"extends": "eslint:recommended",
 	"rules": {

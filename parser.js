@@ -4,34 +4,7 @@ const https = require('https');
 const fs = require('fs');
 const querystring = require('querystring');
 const moment = require('moment');
-
-let db;
-
-if (Config.mysql) {
-	const mysql = require('mysql');
-	db = mysql.createConnection({
-		host: Config.mysql.host,
-		port: Config.mysql.port,
-		user: Config.mysql.user,
-		password: Config.mysql.password,
-	});
-
-	db.connect(function (err) {
-		if (err) {
-			return console.error('(parser.js) error connecting to mysql server: ' + err.stack);
-		}
-
-		db.query('CREATE DATABASE IF NOT EXISTS ' + Config.mysql.dbName + ';', function (error, results, fields) {
-			if (error) throw error;
-			db.changeUser({database: Config.mysql.dbName}, function (err) {
-				if (err) throw err;
-				db.query('CREATE TABLE IF NOT EXISTS logs (id INT PRIMARY KEY AUTO_INCREMENT, date BIGINT, server VARCHAR(32), room VARCHAR(100), user VARCHAR(32), userid VARCHAR(19), messageType VARCHAR(20), message TEXT)', function (error, results, fields) {
-					if (err) throw err;
-				});
-			});
-		});
-	});
-}
+const mysql = require('mysql');
 
 global.Commands = require('./commands.js');
 fs.readdirSync('./plugins/').forEach(function (file) {
@@ -352,9 +325,9 @@ module.exports = class Parser {
 				break;
 			}
 			if (user !== '') userid = toId(user);
-			let query = 'INSERT INTO logs (date, server, room, user, userid, messageType, message) VALUES (' + Date.now() + ', ' + db.escape(this.serverid) +
-				', ' + db.escape(room) + ', ' + db.escape(user) + ', "' + userid + '", ' + db.escape(messageType) + ', ' + db.escape(message) + ')';
-			db.query(query, function (err) {
+			let query = 'INSERT INTO logs (date, server, room, user, userid, messageType, message) VALUES (' + Date.now() + ', ' + mysql.escape(this.serverid) +
+				', ' + mysql.escape(room) + ', ' + mysql.escape(user) + ', "' + userid + '", ' + mysql.escape(messageType) + ', ' + mysql.escape(message) + ')';
+			Tools.query(query, function (err) {
 				if (err) {
 					fs.appendFileSync('logs/error.txt', 'logChat: ' + err + '\n');
 					return console.log('logChat: ' + err);

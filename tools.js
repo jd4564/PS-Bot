@@ -2,13 +2,104 @@
 
 const fs = require('fs');
 const https = require('https');
+const mysql = require('mysql');
+const sqlite3 = require('sqlite3');
 
 let regdateCache = {};
+let sqliteDb;
 try {
 	regdateCache = JSON.parse(fs.readFileSync('config/regdate.json', 'utf8'));
 } catch (e) {}
 
+if (!Config.mysql) {
+	sqliteDb = new sqlite3.Database('./config/users.db', function () {
+		sqliteDb.run("CREATE TABLE IF NOT EXISTS users (id TEXT, userid TEXT PRIMARY KEY, name TEXT, lastOnline INTEGER, lastOnlineServer TEXT, lastOnlineAction TEXT, room TEXT)");
+		sqliteDb.run("CREATE TABLE IF NOT EXISTS tells (userid TEXT, sender TEXT, message TEXT, date INTEGER)");
+	});
+} else {
+	// lets make sure the database is setup
+	let connection = mysql.createConnection({
+		host: Config.mysql.host,
+		port: Config.mysql.port,
+		user: Config.mysql.user,
+		password: Config.mysql.password,
+	});
+
+	connection.connect(function (err) {
+		if (err) {
+			Config.mysql = false; // something went wrong, revert back to using sqlite
+			return console.log('Error connecting to mysql server: ' + err.stack);
+		}
+		connection.query('CREATE DATABASE IF NOT EXISTS ' + Config.mysql.dbName + ';', function (err, results, fields) {
+			if (err) {
+				Config.mysql = false;
+				return console.log('Error creating mysql database.');
+			}
+			connection.changeUser({database: Config.mysql.dbName}, function (err) {
+				if (err) {
+					Config.mysql = false;
+					return console.log('Error changing mysql databases.');
+				}
+				connection.query('CREATE TABLE IF NOT EXISTS users (id VARCHAR(32), firstSeen BIGINT, userid VARCHAR(19) PRIMARY KEY, name VARCHAR(32), lastOnline BIGINT, lastOnlineServer VARCHAR(32), lastOnlineAction VARCHAR(100), room VARCHAR(100))', function (error, results, fields) {
+					if (err) {
+						Config.mysql = false;
+						return console.log('Error creating mysql users table.');
+					}
+					connection.query('CREATE TABLE IF NOT EXISTS logs (id INT PRIMARY KEY AUTO_INCREMENT, date BIGINT, server VARCHAR(32), room VARCHAR(100), user VARCHAR(32), userid VARCHAR(19), messageType VARCHAR(20), message TEXT)', function (error, results, fields) {
+						if (err) {
+							Config.mysql = false;
+							return console.log('Error creating mysql logs table.');
+						}
+						connection.query('CREATE TABLE IF NOT EXISTS tells (userid VARCHAR(19), sender VARCHAR(32), message TEXT, date BIGINT)', function (error, results, fields) {
+							if (err) {
+								Config.mysql = false;
+								return console.log('Error creating mysql tells table.');
+							}
+						});
+					});
+				});
+			});
+		});
+	});
+}
+
 module.exports = {
+	query: function (queryString, options, callback) {
+		if (!callback) callback = options;
+		if (Config.mysql) {
+			let connection = mysql.createConnection({
+				host: Config.mysql.host,
+				port: Config.mysql.port,
+				user: Config.mysql.user,
+				password: Config.mysql.password,
+				database: Config.mysql.dbName,
+			});
+
+			connection.connect(function (err) {
+				if (err) {
+					console.log('Error connecting to mysql server: ' + err);
+					return callback(err);
+				}
+
+				connection.query(queryString, function (err, rows) {
+					if (err) {
+						console.log('Error querying mysql database: ' + err);
+						return callback(err);
+					}
+					return callback(false, rows);
+				});
+				connection.end();
+			});
+		} else {
+			sqliteDb.all(queryString, options, function (err, rows) {
+				if (err) {
+					console.log('Error querying sqlite database: ' + err);
+					return callback(err);
+				}
+				return callback(false, rows);
+			});
+		}
+	},
 	sanitize: function (message) {
 		if (message.charAt(0) === '/') message = '/' + message;
 		if (message.charAt(0) === '!' || message.substr(0, 2) === '>>') message = ' ' + message;
