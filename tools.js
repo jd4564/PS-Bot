@@ -196,4 +196,58 @@ module.exports = {
 		req.write(toUpload);
 		req.end();
 	},
+	getServers: function (callback) {
+		https.get('https://pokemonshowdown.com/servers/', res => {
+			let servers = [];
+			let data = '';
+
+			res.on('data', chunk => {
+				data += chunk;
+			}).on('end', () => {
+				data = data.replace(/\n/g, '').replace(/\s+/g, ' ');
+				//let servers = {};
+				let rows = data.split('<tr>');
+				rows.splice(0, 1);
+				for (let u in rows) {
+					if (rows[u].includes('(offline)')) continue;
+					let serverName = rows[u].split('<strong>')[1].split('</strong>')[0];
+					let serverid = rows[u].match(/<a href="\/servers\/[a-z]+/)[0].replace(/<a href="\/servers\//, '');
+					let owners = (rows[u].match(/<small>([a,-z]+)<\/small>/) ? rows[u].match(/<small>([a,-z]+)<\/small>/)[0].replace(/(<small>|<\/small>)/g, '') : '');
+					let userCount = rows[u].match(/\([0-9]+\)/)[0].replace(/(\(|\))/, '');
+					servers.push({
+						name: serverName,
+						id: serverid,
+						userCount: userCount,
+						owners: owners,
+					});
+				}
+				return callback(servers);
+			});
+		}).on('error', e => {
+			console.log('Error retrieving server list: ' + e);
+		});
+	},
+	getServerIp: function (id, callback) {
+		if (id === 'showdown') {
+			return callback({host: 'sim.smogon.com', port: 8000, name: 'Smogon University'});
+		}
+		https.get('https://play.pokemonshowdown.com/crossdomain.php?host=' + id + '.psim.us', res => {
+			let data = '';
+
+			res.on('data', chunk => {
+				data += chunk;
+			}).on('end', () => {
+				let lines = data.split('\n');
+				let config;
+				for (let u in lines) {
+					if (lines[u].includes('config')) {
+						config = lines[u].replace(/\\"/g, '"').substr(14);
+						config = config.substr(0, config.length - 2);
+						break;
+					}
+				}
+				return callback(JSON.parse(config));
+			});
+		});
+	},
 };

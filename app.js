@@ -145,15 +145,54 @@ if (!Object.keys(Config.servers)[count]) {
 	console.log("Please edit config.js and specify a server to connect to.");
 	return process.exit();
 }
-connect(Object.keys(Config.servers)[count]);
-count++;
 
-let connectTimer = setInterval(function () {
-	if (!Object.keys(Config.servers)[count]) return clearInterval(connectTimer);
+if (Config.servers['all']) {
+	console.log("Fetching all servers before connecting...");
+	Tools.getServers(function (serverList) {
+		getServerIps(serverList);
+	});
+} else {
 	connect(Object.keys(Config.servers)[count]);
 	count++;
-}, 1000); // this delay is to avoid problems logging into multiple servers so quickly
 
+	let connectTimer = setInterval(function () {
+		if (!Object.keys(Config.servers)[count]) return clearInterval(connectTimer);
+		connect(Object.keys(Config.servers)[count]);
+		count++;
+	}, 1000); // this delay is to avoid problems logging into multiple servers so quickly
+}
+
+function getServerIps(serverList, baseConfig) {
+	if (serverList.length < 1) {
+		console.log("Server information fetched, connecting...");
+		connect(Object.keys(Config.servers)[count]);
+		count++;
+
+		let connectTimer = setInterval(function () {
+			if (!Object.keys(Config.servers)[count]) return clearInterval(connectTimer);
+			connect(Object.keys(Config.servers)[count]);
+			count++;
+		}, 1000); // this delay is to avoid problems logging into multiple servers so quickly
+		return;
+	}
+	if (!baseConfig) {
+		baseConfig = Config.servers['all'];
+		delete Config.servers['all'];
+	}
+	console.log("Fetching server information for " + serverList[0].id);
+	Tools.getServerIp(serverList[0].id, function (data) {
+		if (!Config.servers[serverList[0].id]) {
+			Config.servers[serverList[0].id] = JSON.parse(JSON.stringify(baseConfig));
+			Config.servers[serverList[0].id].id = serverList[0].id;
+			Config.servers[serverList[0].id].serverName = data.name;
+			Config.servers[serverList[0].id].ip = data.host;
+			Config.servers[serverList[0].id].port = data.port;
+			Config.servers[serverList[0].id].ssl = (data.port === 443);
+		}
+		serverList.splice(0, 1);
+		getServerIps(serverList, baseConfig);
+	});
+}
 
 /*
  * static web server for displaying chat logs with the viewlogs command.
