@@ -88,7 +88,13 @@ module.exports = {
 					}
 					return callback(false, rows);
 				});
-				connection.end();
+				connection.end(function (err) {
+					if (err) console.log('Error ending mysql connection: ' + err);
+				});
+			});
+
+			connection.on('error', function (err) {
+				if (err) console.log('mysql err: ' + err);
 			});
 		} else {
 			sqliteDb.all(queryString, options, function (err, rows) {
