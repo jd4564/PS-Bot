@@ -345,7 +345,7 @@ module.exports = class Parser {
 			let postData = querystring.stringify({
 				'act': 'login',
 				'name': toId(name),
-				'pass': encodeURIComponent(pass),
+				'pass': pass,
 				'challstr': this.challenge,
 			});
 			options = {
